@@ -74,7 +74,7 @@ gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
   .teaser img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
   .intro { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
   .summary h3 { font-size: 1.75rem; font-weight: 400; line-height: 1.2; margin: 0 0 .75rem; }
-  .summary p { text-align: justify; }
+  .summary { text-align: center; }
   .summary p:last-child { margin-bottom: 0; }
   .summary b.k { color: var(--accent); }
 
@@ -513,8 +513,8 @@ gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
     We fine-tune an LLM on fictitious facts, so we know exactly which documents taught each answer, and vary one property of the training data at a time.</p>
   <p>Existing methods lose track of these documents when a fact is repeated across many documents or when look-alike distractors are added.
     The cause is at the token level: the evidence sits in a few tokens per document, but standard methods average it with every other token,
-    and cross-entropy further suppresses the tokens the model is most confident about.</p>
-  <p>Scoring each document by its <b class="k">top-10 tokens</b> and using the <b class="k">negative log-odds loss</b> sharply raises recall,
+    and cross-entropy further suppresses the tokens the model is most confident about.
+    Scoring each document by its <b class="k">top-10 tokens</b> and using the <b class="k">negative log-odds loss</b> sharply raises recall,
     and the loss change also helps on FTRACE&#8209;TREX.</p>
   </div></div>
 </div>
