@@ -13,13 +13,13 @@ body, td, th {
 }
 .text-center { text-align: center; }
 
-/* CATT blue, the page's accent colour. */
+/* CATT crimson, the page's accent colour. */
 .nd-pageheader {
   padding: 2rem 15px;
   margin-bottom: 1.5rem;
   color: #ffffff;
   text-align: center;
-  background-color: #1f5fa8;
+  background-color: #8f1d2c;
 }
 
 .nd-pageheader a, .nd-pageheader a.likelink {
@@ -31,7 +31,7 @@ body, td, th {
   padding: 1rem;
   color: #ffffff;
   text-align: center;
-  background-color: #1f5fa8;
+  background-color: #8f1d2c;
 }
 
 .nd-pagefooter a {
