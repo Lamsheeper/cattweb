@@ -73,9 +73,6 @@ nobr.widenobr {
   border: 1px solid;
   margin: 0 38px;
 }
-.thumb img.wide {
-  margin-top: 22px;
-}
 .thumb.soon {
   color: #6b7780;
   cursor: default;

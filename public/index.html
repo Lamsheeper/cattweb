@@ -534,7 +534,7 @@ gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
 const LINKS = [
   { label: "arXiv", caption: ["ArXiv", "Preprint"], href: "", thumb: "paper-thumb.png" },
   { label: "Code", caption: ["Source Code", "Github"], href: "https://github.com/Lamsheeper/catt", thumb: "code-thumb.png" },
-  { label: "Demo", caption: ["Interactive", "Demo"], href: "https://huggingface.co/spaces/lamsheeper-data-attribution/catt-demo", thumb: "demo-thumb.png", wide: true },
+  { label: "Demo", caption: ["Interactive", "Demo"], href: "https://huggingface.co/spaces/lamsheeper-data-attribution/catt-demo", thumb: "demo-thumb.png" },
   { label: "Models & Datasets", caption: ["Models &", "Datasets"], href: "https://huggingface.co/lamsheeper-data-attribution", thumb: "data-thumb.png" },
 ];
 /* [name, affiliations, homepage]; an empty homepage shows the name unlinked. */
@@ -545,7 +545,7 @@ const AUTHORS = [
   ["Antonio Torralba", "2", "https://web.mit.edu/torralba/www/"],
   ["David Bau", "1", "https://baulab.info/"],
 ];
-const AFFILIATIONS = [["Northeastern University", "https://khoury.northeastern.edu/"], ["MIT", "https://www.csail.mit.edu/"]];
+const AFFILIATIONS = ["Northeastern University", "MIT"];
 const ARXIV_ID = "XXXX.XXXXX";
 const DEMO = LINKS.find(l => l.label === "Demo").href;
 
@@ -669,10 +669,9 @@ function header() {
   $("#authors").append(
     ...AUTHORS.flatMap(([n, s, url], i) => [el("nobr", {}, link(n, url), el("sup", {}, s), comma(i, AUTHORS)), " "]),
     el("br"),
-    ...AFFILIATIONS.flatMap(([a, url], i) => [el("nobr", {}, el("sup", {}, String(i + 1)), link(a, url), comma(i, AFFILIATIONS)), " "]));
+    ...AFFILIATIONS.flatMap((a, i) => [el("nobr", {}, el("sup", {}, String(i + 1)), a, comma(i, AFFILIATIONS)), " "]));
   for (const l of LINKS) {
-    const [w, h] = l.wide ? [104, 78] : [78, 100];
-    const img = el("img", { src: `images/${l.thumb}`, width: w, height: h, alt: `${l.label} thumbnail`, class: l.wide ? "wide" : null });
+    const img = el("img", { src: `images/${l.thumb}`, width: 78, height: 100, alt: `${l.label} thumbnail` });
     const caption = l.caption.flatMap((c, i) => i ? [el("br"), c] : [c]);
     $("#links").append(l.href
       ? el("a", { class: "thumb", href: l.href, target: "_blank", rel: "noopener" }, img, el("br"), ...caption)
