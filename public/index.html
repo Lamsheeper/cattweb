@@ -67,14 +67,16 @@ gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
   [hidden] { display: none !important; }
   .mono { font-family: var(--mono); }
   .dim { color: var(--dim); }
-  .col { max-width: 920px; margin: 0 auto; padding: 0 24px; }
   .wide { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
   /* Teaser and TL;DR -------------------------------------------------------- */
   .teaser { margin: 0 auto; max-width: 1000px; padding: 0 24px; }
   .teaser img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
-  .tldr { margin: 0; font-size: 17px; line-height: 1.65; }
-  .tldr b.k { color: var(--accent); }
+  .intro { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+  .summary h3 { font-size: 1.75rem; font-weight: 400; line-height: 1.2; margin: 0 0 .75rem; }
+  .summary p { text-align: justify; }
+  .summary p:last-child { margin-bottom: 0; }
+  .summary b.k { color: var(--accent); }
 
   /* Sections ---------------------------------------------------------------- */
   section { padding: 80px 0 16px; }
@@ -504,14 +506,15 @@ gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
   <img src="media/teaser.gif" alt="We fine-tune a model on made-up facts and trace an attribution query back to the training document that taught it. Each token's influence under cross-entropy and under negative log-odds, then averaging the 10 highest-scoring tokens, moves the ground-truth document from rank 460 to rank 1 of 1,000.">
 </figure>
 
-<div class="col">
+<div class="intro">
   <div class="card summary"><div class="card-block">
-  <p class="tldr"><b>TL;DR.</b> Data attribution benchmarks disagree on which methods work, and since each uses different training data, queries and tasks, it is hard to tell why.
-    We fine-tune an LLM on fictitious facts, so we know exactly which documents taught each answer, and vary one property of the training data at a time.
-    Existing methods lose track of these documents when a fact is repeated across many documents or when look-alike distractors are added.
+  <h3>Why do data attribution methods fail, and how can we fix them?</h3>
+  <p>Data attribution benchmarks disagree on which methods work, and since each uses different training data, queries and tasks, it is hard to tell why.
+    We fine-tune an LLM on fictitious facts, so we know exactly which documents taught each answer, and vary one property of the training data at a time.</p>
+  <p>Existing methods lose track of these documents when a fact is repeated across many documents or when look-alike distractors are added.
     The cause is at the token level: the evidence sits in a few tokens per document, but standard methods average it with every other token,
-    and cross-entropy further suppresses the tokens the model is most confident about.
-    Scoring each document by its <b class="k">top-10 tokens</b> and using the <b class="k">negative log-odds loss</b> sharply raises recall,
+    and cross-entropy further suppresses the tokens the model is most confident about.</p>
+  <p>Scoring each document by its <b class="k">top-10 tokens</b> and using the <b class="k">negative log-odds loss</b> sharply raises recall,
     and the loss change also helps on FTRACE&#8209;TREX.</p>
   </div></div>
 </div>
