@@ -534,12 +534,13 @@ gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
 <div id="tip"></div>
 
 <script>
-/* The four thumbnail links at the top (images/): set href to "" to show one as "coming soon". */
+/* The thumbnail links at the top (images/): set href to "" to show one as "coming soon". */
 const LINKS = [
   { label: "arXiv", caption: ["ArXiv", "Preprint"], href: "", thumb: "paper-thumb.png" },
   { label: "Code", caption: ["Source Code", "Github"], href: "https://github.com/Lamsheeper/catt", thumb: "code-thumb.png" },
   { label: "Demo", caption: ["Interactive", "Demo"], href: "https://huggingface.co/spaces/catt-bench/catt-demo", thumb: "demo-thumb.png" },
   { label: "Models & Datasets", caption: ["Models &", "Datasets"], href: "https://huggingface.co/catt-bench", thumb: "data-thumb.png" },
+  { label: "Slides", caption: ["Talk", "Slides"], href: "slides/catt-slides.pptx", thumb: "slides-thumb.png", download: true },
 ];
 /* [name, affiliations, homepage]; an empty homepage shows the name unlinked. */
 const AUTHORS = [
@@ -678,7 +679,8 @@ function header() {
     const img = el("img", { src: `images/${l.thumb}`, width: 78, height: 100, alt: `${l.label} thumbnail` });
     const caption = l.caption.flatMap((c, i) => i ? [el("br"), c] : [c]);
     $("#links").append(l.href
-      ? el("a", { class: "thumb", href: l.href, target: "_blank", rel: "noopener" }, img, el("br"), ...caption)
+      ? el("a", l.download ? { class: "thumb", href: l.href, download: "", title: "Download the slides (PowerPoint)" }
+                           : { class: "thumb", href: l.href, target: "_blank", rel: "noopener" }, img, el("br"), ...caption)
       : el("span", { class: "thumb soon", title: "Coming soon" }, img, el("br"), ...caption, el("br"), el("em", {}, "coming soon")));
   }
 }
