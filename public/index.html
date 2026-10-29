@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<!--
+  Project page for "Elucidating the Design Space of LM Data Attribution".
+
+  Static: inline SVG charts drawn from the small JSON files
+  filter/project_page/build.py writes into data/. Every path is relative, so
+  the folder can be served from anywhere (fetch needs HTTP, not file://).
+  The banner, links, citation and footer follow the baulab.info project pages;
+  their styles are in style.css.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elucidating the Design Space of LM Data Attribution</title>
+<meta name="description" content="CATT, a controlled benchmark for LM data attribution, and two fixes that recover the ground-truth signal: the negative log-odds loss and top-k token pooling.">
+<meta property="og:title" content="Elucidating the Design Space of LM Data Attribution">
+<meta property="og:description" content="CATT, a controlled benchmark for LM data attribution, and two fixes that recover the ground-truth signal: the negative log-odds loss and top-k token pooling.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://catt.baulab.info/">
+<meta property="og:image" content="https://catt.baulab.info/media/teaser.gif">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Elucidating the Design Space of LM Data Attribution">
+<meta name="twitter:description" content="CATT, a controlled benchmark for LM data attribution, and two fixes that recover the ground-truth signal: the negative log-odds loss and top-k token pooling.">
+<meta name="twitter:image" content="https://catt.baulab.info/media/teaser.gif">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Math&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FD12LWN557"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date()); gtag('config', 'G-FD12LWN557');
+</script>
+<style>
+  :root {
+    --ink: #1d2429;
+    --body: #292b2c;
+    --dim: #6b7780;
+    --faint: #9aa5ae;
+    --line: #dfe4e8;
+    --bg: #fff;
+    --panel: #f6f8fa;
+    --accent: #1f5fa8;
+    --gt: #196b24;
+    --gt-bg: #d9f2d0;
+    --query: #c04f15;
+    --query-bg: #fbe3d6;
+    --answer: #4b1f6e;
+    --answer-bg: #f0e7f7;
+    --decoy: #d97a1e;
+    --top: #c00000;
+    --ce: #6f93d6;
+    --nlo: #c00000;
+    --sans: "Open Sans", sans-serif;
+    --math: "Cambria Math", "STIX Two Math", "Noto Sans Math", Georgia, serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --ease: cubic-bezier(.4, 0, .2, 1);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--body); font: 16px/1.5 var(--sans); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  [hidden] { display: none !important; }
+  .mono { font-family: var(--mono); }
+  .dim { color: var(--dim); }
+  .col { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+  .wide { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Teaser and TL;DR -------------------------------------------------------- */
+  .teaser { margin: 0 auto; max-width: 1000px; padding: 0 24px; }
+  .teaser img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+  .tldr { margin: 0; font-size: 17px; line-height: 1.65; }
+  .tldr b.k { color: var(--accent); }
+
+  /* Sections ---------------------------------------------------------------- */
+  section { padding: 40px 0 10px; }
+  h2 { font-size: 2rem; line-height: 1.2; color: var(--ink); margin: 0 0 14px; font-weight: 400; }
+  h2 a.anchor { color: var(--faint); font-weight: 400; margin-left: 8px; opacity: 0; transition: opacity .2s; text-decoration: none; }
+  h2:hover a.anchor { opacity: 1; }
+  h3 { font-size: 18px; color: var(--ink); margin: 0 0 8px; }
+  p { margin: 0 0 14px; }
+  .caption { font-size: 13.5px; color: var(--dim); line-height: 1.5; margin-top: 10px; }
+  .takeaway { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; padding: 12px 16px; border-left: 4px solid var(--accent);
+              background: #f1f6fc; border-radius: 0 8px 8px 0; color: var(--ink); font-size: 15.5px; }
+  .figure { margin: 18px 0 0; }
+  hr.sep { border: 0; border-top: 1px solid var(--line); margin: 0; }
+
+  /* Controls ---------------------------------------------------------------- */
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin: 0 0 12px; }
+  .controls label { font-size: 13px; color: var(--dim); margin-right: 8px; }
+  .seg { display: inline-flex; border: 1px solid #c3cfdd; border-radius: 3px; overflow: hidden; background: #fff; vertical-align: middle; }
+  .seg button { font: inherit; font-size: 13.5px; padding: 5px 13px; border: 0; background: #fff; color: var(--ink);
+                cursor: pointer; transition: background-color .2s, color .2s; white-space: nowrap; }
+  .seg button + button { border-left: 1px solid #c3cfdd; }
+  .seg button:hover:not(:disabled):not(.on) { background: #eef3f9; }
+  /* Bold by stroke, not weight, so a button keeps its width when chosen. */
+  .seg button.on { background: var(--accent); color: #fff; -webkit-text-stroke: .4px currentColor; }
+  .seg button:disabled { color: #b5bec6; cursor: not-allowed; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); margin: 0 0 14px; }
+  .tabs button { font: inherit; font-size: 14.5px; padding: 8px 14px; border: 0; background: none; color: var(--dim);
+                 cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1px; }
+  .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  .tabs button:hover:not(.on) { color: var(--ink); }
+
+  /* Cards in the demo's colours (query, answer, fact). */
+  .tcard { margin: 0 0 8px; }
+  .tcard .tab { display: inline-block; position: relative; z-index: 1; margin-bottom: -5px; padding: 0 10px 1px;
+                border: 1.5px solid; color: #fff; font-size: 12.5px; }
+  .tcard .body { border: 1.5px solid; padding: 8px 12px 6px; font-family: var(--mono); font-size: 13px;
+                 white-space: pre-wrap; word-break: break-word; color: var(--ink); }
+  .tcard.fact .tab { background: var(--gt); border-color: #13501b; }
+  .tcard.fact .body { background: var(--gt-bg); border-color: var(--gt); }
+  .tcard.query .tab { background: var(--query); border-color: #80350e; }
+  .tcard.query .body { background: var(--query-bg); border-color: #80350e; }
+  .tcard.answer .tab { background: #7030a0; border-color: var(--answer); }
+  .tcard.answer .body { background: var(--answer-bg); border-color: var(--answer); font-weight: 700; color: var(--answer); font-size: 15px; }
+
+  /* Charts ------------------------------------------------------------------ */
+  svg.chart { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--sans); }
+  svg.chart text { fill: #48545c; font-size: 12px; }
+  svg.chart .axis { stroke: #8f9aa3; stroke-width: 1; }
+  svg.chart .grid { stroke: #edf0f2; stroke-width: 1; }
+  svg.chart .ylab, svg.chart .xlab { font-size: 13px; fill: var(--ink); }
+  /* Geometry as CSS where the browser animates it; the attributes stay as the fallback. */
+  .anim path, .anim circle, .anim rect, .anim line { transition: d .6s var(--ease), cx .6s var(--ease), cy .6s var(--ease),
+                                                                y .6s var(--ease), height .6s var(--ease), opacity .3s, y1 .6s var(--ease), y2 .6s var(--ease); }
+  #tip { position: fixed; z-index: 50; pointer-events: none; background: #fff; border: 1px solid #ccd5dc; border-radius: 8px;
+         box-shadow: 0 6px 22px rgba(29,36,41,.16); padding: 8px 11px; font-size: 13px; line-height: 1.45; color: var(--ink);
+         max-width: 300px; display: none; }
+  #tip table { border-collapse: collapse; }
+  #tip td { padding: 0 4px; white-space: nowrap; }
+  #tip .egs { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px; }
+  #tip .egs code { font: 12px var(--mono); background: #f0f3f6; border: 1px solid #dde3e8; padding: 0 5px; white-space: pre; }
+  table.types th.hint { cursor: help; }
+  table.types th.hint .nm { border-bottom: 1px dotted #8f9aa3; }
+  table.types th.hint:hover .nm { border-bottom-color: var(--ink); }
+  #tip td.v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .sw { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid; vertical-align: middle; }
+
+  /* CATT walkthrough, laid out as the talk's slides: the axes on top, the training set beside the query,
+     and the ground truth traced from the answer back to its documents. */
+  .catt { scroll-margin-top: 16px; margin-top: 18px; border: 1px solid var(--line); background: #fff; padding: 16px 20px 14px; }
+  /* The setup and the explorer flank the four dataset properties, which sit together in a tinted band. */
+  .axes { display: grid; grid-template-columns: 172px minmax(0, 1fr) 172px; gap: 6px 10px; margin-bottom: 12px; }
+  .axes .knobs, .axes .side { background: #edf2f8; padding: 7px 12px 9px; }
+  .axes .side { background: #f2f2f2; }
+  .axes .side .kl { color: var(--dim); }
+  .axes .side button { border-left-color: #d9d9d9; }
+  .axes .kl { margin: 0 0 7px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--accent); }
+  .axes .kl span { font-weight: 400; letter-spacing: .02em; text-transform: none; font-size: 12px; color: var(--dim); }
+  .axes .kg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 10px; }
+  .axes .kg button { border-left-color: #d3dce6; }
+  .axes .kg .t i { color: var(--c); font-size: 18px; opacity: .55; transition: opacity .2s; }
+  .axes .kg button.on .t i, .axes .kg button:hover .t i { opacity: 1; }
+  .axes button { font: inherit; text-align: left; background: none; border: 0; border-left: 4px solid #e7e6e6; padding: 1px 4px 1px 10px;
+                 cursor: pointer; color: var(--faint); transition: color .2s, border-color .2s; }
+  .axes button:hover { color: var(--body); }
+  .axes button.on { color: var(--ink); }
+  .axes .t { display: block; font-size: 15px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+  .axes .t i { font-family: Georgia, serif; font-weight: 400; margin-left: 4px; }
+  .axes .d { display: block; font-size: 12.5px; line-height: 1.3; }
+  .narr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 24px; align-items: center; border-left: 4px solid var(--c, var(--accent));
+          background: var(--panel); padding: 8px 16px; margin-bottom: 14px; height: 112px; }
+  .narr h3 { margin: 0 0 2px; font-size: 17px; }
+  .narr p { margin: 0; font-size: 14.5px; line-height: 1.5; }
+  .narr .ctl { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .narr .nav { display: flex; gap: 8px; }
+  .navbtn { font: inherit; font-size: 13.5px; font-weight: 600; padding: 6px 14px; border-radius: 3px; border: 1px solid #c3cfdd; background: #fff;
+            color: var(--ink); cursor: pointer; }
+  .navbtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .navbtn:disabled { opacity: .35; cursor: default; }
+  /* Until the reader has been through every step once, the way on pulses, after the step's own animation. */
+  @keyframes nudge { 0% { box-shadow: 0 0 0 0 rgba(31,95,168,.55); transform: scale(1); }
+                     40% { transform: scale(1.06); }
+                     70% { box-shadow: 0 0 0 11px rgba(31,95,168,0); transform: scale(1); }
+                     100% { box-shadow: 0 0 0 0 rgba(31,95,168,0); } }
+  .navbtn.primary.nudge { animation: nudge 1.5s ease-out infinite; animation-delay: var(--nd, 0s); }
+  .navbtn.primary.nudge:hover { animation: none; }
+
+  /* The slide: a fixed frame, so the view keeps its size from step to step. */
+  .slide { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) 96px 330px; grid-template-rows: 36px 340px; }
+  .colh { grid-row: 1; display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; color: var(--ink); }
+  .colh svg { width: 26px; height: 26px; fill: #404040; flex: none; }
+  .tset, .qset { grid-row: 2; background: #f2f2f2; min-width: 0; }
+  .tset { grid-column: 2; padding: 14px 18px 10px 14px; overflow: hidden; }
+  .qset { grid-column: 4; padding: 14px 14px 10px; display: flex; flex-direction: column; }
+  .qset .tcard .body { font-size: 13.5px; }
+  svg.wires { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; font-family: var(--sans); }
+  svg.wires .gt { fill: none; stroke: #b07800; stroke-width: 2.5; stroke-dasharray: 0.5 5; stroke-linecap: round; stroke-linejoin: round; }
+  svg.wires .gtl { fill: #b07800; font-size: 13px; font-weight: 700; }
+  svg.wires .ftl { fill: var(--dim); font-size: 12.5px; }
+  svg.wires .ft { fill: none; stroke: #bfbfbf; stroke-width: 3; }
+  svg.wires .ft.run { stroke: var(--accent); stroke-dasharray: 7 6; animation: flow .5s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -13; } }
+  svg.wires .sym { font-family: Georgia, serif; font-style: italic; font-size: 17px; }
+  svg.wires .val { font-size: 11.5px; font-weight: 700; }
+  .gtbox { border: 2.5px dotted #b07800; padding: 6px 12px 0 6px; margin: 0 0 8px; }
+  .dcard { position: relative; margin: 0 0 8px; }
+  .dcard.deep1 { margin-right: 4px; margin-bottom: 12px; }
+  .dcard.deep2 { margin-right: 8px; margin-bottom: 16px; }
+  .dcard .sh, .dcard .c { background: #fff; border: 1.5px solid var(--gt); }
+  .dcard .sh { position: absolute; inset: 0; }
+  .dcard .c { position: relative; padding: 6px 12px; font-size: 14px; line-height: 1.45; color: var(--ink); min-height: calc(2.9em + 12px); }
+  .dcard .tx { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .dcard.one .c { min-height: 0; }
+  .dcard.decoy .sh, .dcard.decoy .c { border-color: #ed7d31; }
+  .dcard.decoy .c { font-family: var(--mono); font-size: 13px; }
+  .dcard .cnt { position: absolute; right: -6px; top: -9px; z-index: 1; font-size: 11px; font-weight: 700; color: #fff; background: var(--gt);
+                border-radius: 999px; padding: 0 7px; line-height: 17px; }
+  .dcard.decoy .cnt { background: #ed7d31; }
+  /* The redundancy step's deck: every one of the N documents, scrollable, growing and shrinking with N. */
+  .deck { overflow: hidden auto; padding: 0 6px 0 0; scrollbar-width: thin; scrollbar-color: #b9c4d0 transparent; }
+  .deck::-webkit-scrollbar { width: 6px; }
+  .deck::-webkit-scrollbar-thumb { background: #b9c4d0; border-radius: 3px; }
+  .deck.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 30px), transparent); mask-image: linear-gradient(#000 calc(100% - 30px), transparent); }
+  .deck.docs { max-height: 214px; }
+  .deck .dcard .c { padding-right: 40px; }
+  .deck.facts { max-height: 152px; padding: 10px 10px 0 0; }
+  /* Under a deck, the edges of the sheets out of view; they drop on and slide off as the count changes. */
+  .pile { position: relative; padding: 0 0 6px; }
+  .gtbox .pile { margin-right: 6px; }
+  .tset > .pile { margin-right: 10px; }
+  .sheet { display: block; margin: 0 calc(2px + var(--k) * 1.6px); background: #fff;
+           border: 1.5px solid var(--gt); border-top: 0; box-sizing: content-box; height: 1.5px; }
+  @keyframes sheet-on { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes sheet-off { to { opacity: 0; transform: translateY(12px); } }
+  .sheet.on { animation: sheet-on .35s var(--ease) both; animation-delay: var(--d, 0s); }
+  .sheet.off { animation: sheet-off .3s ease-in forwards; animation-delay: var(--d, 0s); }
+  @keyframes delta { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.85); } 14%, 72% { opacity: 1; transform: translate(-50%, 0); }
+                     100% { opacity: 0; transform: translate(-50%, -12px); } }
+  .delta { position: absolute; left: 50%; top: -14px; z-index: 2; white-space: nowrap; font-size: 12px; font-weight: 700; color: #fff;
+           background: var(--gt); border-radius: 999px; padding: 1px 10px; box-shadow: 0 2px 6px rgb(0 0 0 / .15); animation: delta 1.7s var(--ease) both; }
+  .delta.neg { background: #8a8f98; }
+  .deck.facts .dcard .c { padding-right: 58px; }
+  /* A dial that only reshapes the training set: the panel pulses in the step's color. */
+  @keyframes bump { from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 45%, transparent); } to { box-shadow: 0 0 0 3px transparent; } }
+  .tset.bump { animation: bump .9s ease-out; }
+  .dcard .dno { position: absolute; right: 9px; bottom: 5px; font-size: 10.5px; font-weight: 700; color: var(--faint); font-variant-numeric: tabular-nums; }
+  @keyframes leave { from { max-height: 90px; opacity: 1; } to { max-height: 0; opacity: 0; margin-bottom: 0; transform: translateX(18px); } }
+  .dcard.leave { overflow: hidden; animation: leave .32s ease-in forwards; }
+  .deckhint { font-size: 12.5px; color: var(--dim); text-align: center; margin: -2px 0 6px; }
+  .deckhint b { color: var(--gt); font-variant-numeric: tabular-nums; }
+  .vdots { text-align: center; color: var(--dim); font-size: 18px; line-height: 1; margin: -2px 0 8px; }
+  .llmrow { margin-top: auto; display: flex; align-items: center; gap: 12px; padding-top: 8px; }
+  svg.net { width: 58px; height: 58px; flex: none; overflow: visible; }
+  svg.net line { stroke: #1f5fa8; stroke-width: 2; }
+  svg.net circle { fill: #fff; stroke: #1f5fa8; stroke-width: 2; transition: fill .3s; }
+  @keyframes think { 0%, 100% { fill: #fff; } 50% { fill: #9ec1e8; } }
+  .llmrow.training svg.net circle { animation: think .6s ease-in-out infinite; }
+  .llmrow.training svg.net circle:nth-of-type(2n) { animation-delay: .3s; }
+  .llmrow .nm { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .llmrow .st { font-size: 12.5px; color: var(--dim); line-height: 1.35; }
+  .setting { margin-top: 10px; height: 22px; font-size: 13.5px; color: var(--dim); padding: 0 0 0 44px;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .setting b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .setting .new { color: var(--accent); font-weight: 700; }
+  @keyframes flash { 0% { background: rgba(31,95,168,.16); } 100% { background: rgba(31,95,168,0); } }
+  .setting.flash { animation: flash 1.1s ease-out; }
+  b.kf { color: var(--query); }
+  b.kv { color: var(--answer); }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .fade { animation: fadein .35s ease-out both; }
+
+  /* The walkthrough's motion: the training set is dealt in, a new model trains, it answers, and the answer is traced back. */
+  @keyframes deal { from { opacity: 0; transform: translate(-16px, -6px); } to { opacity: 1; transform: none; } }
+  .deal { animation: deal .42s var(--ease) both; animation-delay: var(--d, 0s); }
+  @keyframes fan { from { transform: translate(0, 0); opacity: 0; } }
+  .deal .sh { animation: fan .45s var(--ease) both; animation-delay: calc(var(--d, 0s) + .18s); }
+  @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  .deal .cnt { animation: pop .35s ease-out both; animation-delay: calc(var(--d, 0s) + .32s); }
+  svg.wires .reveal { fill: none; stroke: #fff; stroke-width: 26; stroke-dasharray: 1 1; }
+  svg.wires .reveal.draw { animation: reveal .75s ease-in-out both; animation-delay: var(--td, 0s); }
+  @keyframes reveal { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  svg.wires .later { animation: fadein .3s ease-out both; animation-delay: var(--td, 0s); }
+  svg.wires .grow { transform-box: fill-box; transform-origin: center; animation: growy .45s var(--ease) both; }
+  @keyframes growy { from { transform: scaleY(0); } }
+  @keyframes glow { 0% { box-shadow: 0 0 0 0 rgba(176,120,0,.55); } 100% { box-shadow: 0 0 0 12px rgba(176,120,0,0); } }
+  .gtbox.glow { animation: glow .9s ease-out 2; animation-delay: var(--gd, 0s); }
+  .qset .tcard.answer { transition: opacity .3s; }
+  .qset.training .tcard.answer { opacity: .3; }
+  @keyframes say { 0% { transform: scale(.92); } 60% { transform: scale(1.05); } 100% { transform: none; } }
+  .tcard.answer.say { animation: say .45s ease-out both; }
+  .llmrow .bar { height: 4px; width: 150px; background: #e2e7ec; border-radius: 2px; overflow: hidden; margin-top: 5px; opacity: 0; transition: opacity .25s; }
+  .llmrow .bar i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+  .llmrow.training .bar { opacity: 1; }
+  .llmrow.training .bar i { animation: train 1.2s linear both; }
+  @keyframes train { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .llmrow .st.ok { color: var(--gt); font-weight: 600; }
+  @keyframes rise2 { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .rise2 { animation: rise2 .35s ease-out both; }
+  @keyframes barin { from { transform: scaleY(0); } }
+  .axes button { position: relative; }
+  .axes button.on::before { content: ""; position: absolute; left: -4px; top: 0; bottom: 0; width: 4px; background: var(--c); transform-origin: top; }
+  .axes button.on.grow::before { animation: barin .35s var(--ease) both; }
+  @keyframes slr { from { opacity: 0; transform: translateX(18px); } }
+  @keyframes sll { from { opacity: 0; transform: translateX(-18px); } }
+  .sl-r { animation: slr .3s var(--ease) both; }
+  .sl-l { animation: sll .3s var(--ease) both; }
+
+  /* The last step: browse the dataset itself, a fact at a time, in the same frame. */
+  .dx { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 14px; height: 600px; margin-left: 44px; }
+  .dx.open { animation: dxopen .5s var(--ease) both; }
+  @keyframes dxopen { from { height: 376px; } to { height: 600px; } }
+  /* Leaving the explorer: the slide starts at the explorer's height and closes up. Padding, so the slide's size watcher stays quiet. */
+  .slide.close { animation: slideclose .5s var(--ease) both; }
+  @keyframes slideclose { from { padding-bottom: 224px; } to { padding-bottom: 0; } }
+  .dxside, .dxmain { background: #f2f2f2; min-width: 0; min-height: 0; }
+  .dxside { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .dxside .dl { font-size: 12px; color: var(--dim); margin: 0 0 2px; }
+  .dxside .seg button { padding: 3px 9px; font-size: 12.5px; }
+  .dxside input { font: inherit; font-size: 13px; padding: 4px 9px; border: 1px solid #c3cfdd; border-radius: 0; width: 100%; margin-top: 4px; }
+  .dxside ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; min-height: 0; background: #fff; }
+  .dxside li { font-size: 13px; padding: 3px 8px; cursor: pointer; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dxside li:hover { background: #eef3f9; }
+  .dxside li.on { background: var(--accent); color: #fff; }
+  .dxside li .i { display: inline-block; width: 22px; color: var(--faint); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+  .dxside li.on .i { color: #cfe0f3; }
+  .dxmain { padding: 12px 16px; overflow-y: auto; }
+  .dxmain h5 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); }
+  .dxmain .tcard .body { font-family: var(--sans); font-size: 14.5px; }
+  .dxkv { font-size: 12.5px; color: var(--dim); margin: 2px 0 0; }
+  .dxkv span { margin-right: 14px; }
+  .dxkv b { color: var(--ink); font-weight: 600; }
+  .dxq { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px 6px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+  .dxq li { font: 12.5px/1.45 var(--mono); background: var(--query-bg); border: 1px solid #e9c2ab; padding: 4px 9px;
+            white-space: pre-wrap; color: var(--ink); }
+  .dxq li .a { font-weight: 700; color: var(--answer); background: var(--answer-bg); border-radius: 3px; padding: 0 4px; }
+  .dxstep { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; font-size: 13.5px; }
+  .dxstep .navbtn { padding: 2px 10px; font-size: 13px; }
+  .dxstep .g { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); background: #fff;
+               border: 1px solid var(--line); padding: 1px 6px; }
+  pre.dxdoc { margin: 8px 0 0; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; color: #3a464e; background: #fff;
+              border: 1px solid var(--line); padding: 10px 12px; max-height: 340px; overflow: auto; }
+  .dxdecoys { margin: 0; padding: 0 0 0 26px; font: 12.5px/1.6 var(--mono); color: #7a4510; }
+  @media (max-width: 1000px) {
+    .axes { grid-template-columns: 1fr 1fr; }
+    .axes .knobs { grid-column: 1 / -1; grid-row: 2; }
+    .axes .kg { grid-template-columns: 1fr 1fr; }
+    .axes .t { white-space: normal; }
+    .dcard .tx { -webkit-line-clamp: 3; }
+    .narr { grid-template-columns: 1fr; height: auto; }
+    .narr .ctl { align-items: flex-start; }
+    .slide { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 8px; }
+    .slide > * { grid-column: 1 !important; grid-row: auto !important; }
+    .tset { order: 1; } .colh.qh { order: 2; } .qset { order: 3; }
+    .tset, .qset { height: auto; }
+    .qset .llmrow { margin-top: 10px; }
+    svg.wires { display: none; }
+    .setting { padding-left: 0; height: auto; white-space: normal; }
+    .dx, .dx.open { grid-template-columns: 1fr; height: auto; margin-left: 0; animation: none; }
+    .slide.close { animation: none; }
+    .dxside ul { max-height: 170px; }
+    .dxmain { max-height: 520px; }
+  }
+
+  /* Recall vs N: chart beside a legend grouped by family. */
+  .rv { display: grid; grid-template-columns: minmax(0, 1fr) 196px; gap: 10px 18px; align-items: start; }
+  .legend { font-size: 13px; }
+  .legend .fam { font-size: 11.5px; font-weight: 700; letter-spacing: .03em; margin: 10px 0 2px; }
+  .legend .fam:first-child { margin-top: 0; }
+  .legend .item { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 2px 4px; border-radius: 5px; color: var(--ink); }
+  .legend .item:hover { background: #f0f3f6; }
+  svg.chart g.m { transition: opacity .25s; }
+  svg.chart.focus g.m:not(.hl) { opacity: .12; }
+  svg.chart g.m.off { display: none; }
+
+  /* The two fixes, then the histogram stepper. */
+  /* The two fix cards share rows (tag, title, equations, text), so their equation panels line up and match in height. */
+  .fixcards { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto 1fr; gap: 0 14px; margin: 6px 0 22px; }
+  .fixcard { padding: 14px 16px; background: #eef2f6;
+             display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; }
+  .fixcard .math { display: flex; justify-content: center; align-items: center; background: #fff; border-radius: 0; }
+  .eqs { display: grid; grid-template-columns: auto auto; gap: 2px 12px; align-items: baseline; text-align: left; }
+  .eqs .lbl { text-align: right; margin: 0; }
+  .eqs > span { white-space: nowrap; }
+  .eqs .ctx { grid-column: 1 / -1; font-family: var(--sans); font-size: 13px; color: var(--dim); margin-bottom: 2px; }
+  .eqs .ctx i { font-family: var(--math); font-size: 15px; color: var(--ink); }
+  .ours-tag { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: var(--nlo);
+              border-radius: 999px; padding: 0 6px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+  .eqs .lbl.ours { color: var(--nlo); font-weight: 700; }
+  .eqs .lbl.ours em { font-style: normal; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: var(--nlo);
+                      border-radius: 999px; padding: 0 6px; margin-left: 5px; vertical-align: 1px; }
+  .fixcard .fx { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--nlo); }
+  .fixcard h3 { margin: 2px 0 8px; }
+  .fixcard p { font-size: 14.5px; margin: 0 0 8px; }
+  .math { font-family: var(--math); font-size: 16.5px; color: var(--ink); text-align: center;
+          background: var(--panel); border-radius: 8px; padding: 8px 10px; margin: 0 0 10px; line-height: 1.7; }
+  .math i { font-style: italic; }
+  .math .hl { color: var(--nlo); font-weight: 700; }
+  .math .lbl { font-family: var(--sans); font-size: 12.5px; color: var(--dim); margin-right: 8px; }
+  .hist { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; border: 1px solid var(--line); padding: 16px; background: var(--panel); }
+  .steps { display: flex; flex-direction: column; gap: 8px; }
+  .steps button { display: grid; grid-template-columns: 26px 1fr; gap: 0 10px; text-align: left; font: inherit; border: 1px solid var(--line);
+                  background: #fff; padding: 9px 11px; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+  .steps button:hover { border-color: #b9c4cd; }
+  .steps button .n { grid-row: span 2; width: 24px; height: 24px; border-radius: 50%; background: #dfe5ea; color: var(--ink);
+                     font-size: 12.5px; font-weight: 700; display: grid; place-items: center; }
+  .steps button .t { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+  .steps button .d { font-size: 12.5px; color: var(--dim); line-height: 1.35; margin-top: 2px; }
+  .steps button.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(31,95,168,.18); }
+  .steps button.on .n { background: var(--accent); color: #fff; }
+  .hplot { background: #fff; border: 1px solid var(--line); padding: 12px 14px 8px; min-width: 0; }
+  .readout { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin-bottom: 2px; }
+  .readout .big { font-size: 34px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; }
+  .readout .lab { font-size: 13px; color: var(--dim); margin-right: 6px; }
+  .readout .setup { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .hlegend { display: flex; gap: 16px; font-size: 12.5px; color: var(--dim); margin-left: auto; }
+  .hlegend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 5px; vertical-align: -2px; }
+  /* The histogram's model picker, across the top of its panel. */
+  .cfg { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .cfgrow { display: flex; align-items: center; gap: 8px; }
+  .cfgrow .lab { font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--dim); }
+  .cfg .seg button, .hctl .seg button { font-size: 12.5px; padding: 4px 10px; }
+  .cfg .badge { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--accent); background: #e6eef8; padding: 3px 10px; }
+  .cfg .copy { margin-left: auto; }
+  .hctl { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; align-items: center; font-size: 13px; color: var(--dim); }
+
+  /* Token-shaded examples, as in the demo. */
+  .toolbar { display: flex; gap: 10px 22px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; font-size: 13.5px; }
+  /* Token-shaded examples, as in the demo: the two losses side by side, their token-type tables below. */
+  .tq { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .5fr) minmax(0, 1.2fr); gap: 12px; margin-top: 18px; align-items: start; }
+  .tq { align-items: stretch; }
+  .tq .tcard { margin: 0; display: flex; flex-direction: column; }
+  .tq .tcard .tab { align-self: flex-start; }
+  .tq .tcard .body { flex: 1; }
+  .tpair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 22px; align-items: start; }
+  .docpane { border: 2px solid var(--gt); background: var(--panel); padding: 14px 16px 10px; position: relative; min-width: 0; }
+  .docpane .gtab { position: absolute; top: -11px; left: 12px; font-size: 12px; color: #fff; background: var(--gt); padding: 0 9px; }
+  .docpane.ce { border-color: var(--ce); }
+  .docpane.ce .gtab { background: var(--ce); }
+  .docpane.nlo { border-color: var(--nlo); }
+  .docpane.nlo .gtab { background: var(--nlo); font-weight: 600; }
+  .docpane.nlo .gtab .ours-tag { background: #fff; color: var(--nlo); }
+  .docpane .rk { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; font-size: 12.5px; color: var(--dim); padding: 2px 0 8px; border-bottom: 1px solid var(--line); }
+  .docpane .rk b { font-size: 18px; font-variant-numeric: tabular-nums; margin-left: 5px; }
+  .good { color: var(--gt); }
+  .bad { color: #c00000; }
+  pre.t { margin: 8px 0 0; font-family: var(--sans); font-size: 14px; line-height: 1.8; color: #2e3a32; white-space: pre-wrap; word-break: break-word; }
+  pre.t span { border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  pre.t .gap { color: var(--faint); }
+  .tas { font-weight: 700; color: var(--ink); white-space: nowrap; padding: 0 4px; border-radius: 3px;
+         background: linear-gradient(90deg, rgba(66,125,201,.28), rgba(234,129,49,.38)); }
+  .tkey { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; font-size: 12.5px; color: var(--dim); margin-top: 12px; }
+  .tkey .bar { width: 120px; height: 10px; border: 1px solid #bfbfbf; border-radius: 2px; background: linear-gradient(90deg, #427dc9, #fff 50%, #ea8131); }
+  table.types { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 13px; margin-top: 8px; table-layout: fixed; }
+  table.types th { font-weight: 600; color: var(--ink); font-size: 11.5px; padding: 4px 1px; vertical-align: bottom; line-height: 1.25; }
+  table.types th.m { text-align: left; width: 110px; font-size: 13.5px; font-weight: 700; }
+  .tpair .tscroll { overflow-x: auto; }
+  .tpair .tscroll table.types { min-width: 470px; }
+  table.types td.m { white-space: nowrap; }
+  table.types td { text-align: center; padding: 7px 4px; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink);
+                   transition: background-color .5s; }
+  table.types td.m { text-align: left; font-weight: 500; background: none; }
+  .cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 16px; border-radius: 999px; background: var(--ink);
+         color: #fff; font-weight: 600; font-size: 14px; }
+  .cta:hover { background: #3a4852; text-decoration: none; }
+
+  /* Summary and citation ---------------------------------------------------- */
+  pre.bib { position: relative; font: 13px/1.5 var(--mono); overflow-x: auto; color: var(--ink); margin: 0; }
+  .copy { position: absolute; top: 10px; right: 10px; font: inherit; font-family: var(--sans); font-size: 12px; padding: 3px 10px;
+          border-radius: 3px; border: 1px solid #c3cfdd; background: #fff; cursor: pointer; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .rise { animation: rise .35s ease-out both; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  @media (max-width: 860px) {
+    .rv, .hist, .tq, .tpair, .fixcards { grid-template-columns: 1fr; }
+    .fixcards { grid-template-rows: none; row-gap: 14px; }
+    .fixcard { display: block; grid-row: auto; min-width: 0; }
+    .fixcard .math { font-size: 14.5px; padding: 8px 6px; overflow-x: auto; justify-content: safe center; }
+    .eqs { gap: 2px 8px; }
+    .steps { display: grid; grid-template-columns: 1fr 1fr; }
+    .seg { flex-wrap: wrap; max-width: 100%; }
+    .typewrap table.types { min-width: 600px; }
+    .seg button { border-bottom: 1px solid #c3cfdd; }
+  }
+  @media (max-width: 760px) {
+    h2 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body class="nd-docs">
+
+<div class="nd-pageheader">
+  <div class="container">
+    <h1 class="lead">
+      <nobr class="widenobr">Elucidating the Design Space of</nobr>
+      <nobr class="widenobr">LM Data Attribution</nobr>
+    </h1>
+    <address id="authors"></address>
+  </div>
+</div>
+
+<div class="container text-center">
+  <p class="thumbs" id="links"></p>
+</div>
+
+<figure class="teaser">
+  <img src="media/teaser.gif" alt="We fine-tune a model on made-up facts and trace an attribution query back to the training document that taught it. Each token's influence under cross-entropy and under negative log-odds, then averaging the 10 highest-scoring tokens, moves the ground-truth document from rank 460 to rank 1 of 1,000.">
+</figure>
+
+<div class="col">
+  <div class="card summary"><div class="card-block">
+  <p class="tldr"><b>TL;DR.</b> Data attribution benchmarks disagree on which methods work, and since each uses different training data, queries and tasks, it is hard to tell why.
+    We fine-tune an LLM on fictitious facts, so we know exactly which documents taught each answer, and vary one property of the training data at a time.
+    Existing methods lose track of these documents when a fact is repeated across many documents or when look-alike distractors are added.
+    The cause is at the token level: the evidence sits in a few tokens per document, but standard methods average it with every other token,
+    and cross-entropy further suppresses the tokens the model is most confident about.
+    Scoring each document by its <b class="k">top-10 tokens</b> and using the <b class="k">negative log-odds loss</b> sharply raises recall,
+    and the loss change also helps on FTRACE&#8209;TREX.</p>
+  </div></div>
+</div>
+
+<section id="benchmark"><div class="wide"></div></section>
+<section id="existing"><div class="wide"></div></section>
+<section id="signal"><div class="wide"></div></section>
+<section id="tokens"><div class="wide"></div></section>
+<section id="fixes"><div class="wide"></div></section>
+<section id="topk"><div class="wide"></div></section>
+<section id="ftrace"><div class="wide"></div></section>
+<section id="cite"><div class="wide"></div></section>
+
+<footer class="nd-pagefooter">
+  <a href="https://baulab.info/">About the Bau Lab</a>
+</footer>
+<div id="tip"></div>
+
+<script>
+/* The four thumbnail links at the top (images/): set href to "" to show one as "coming soon". */
+const LINKS = [
+  { label: "arXiv", caption: ["ArXiv", "Preprint"], href: "", thumb: "paper-thumb.png" },
+  { label: "Code", caption: ["Source Code", "Github"], href: "https://github.com/Lamsheeper/catt", thumb: "code-thumb.png" },
+  { label: "Demo", caption: ["Interactive", "Demo"], href: "https://huggingface.co/spaces/lamsheeper-data-attribution/catt-demo", thumb: "demo-thumb.png", wide: true },
+  { label: "Models & Datasets", caption: ["Models &", "Datasets"], href: "https://huggingface.co/lamsheeper-data-attribution", thumb: "data-thumb.png" },
+];
+/* [name, affiliations, homepage]; an empty homepage shows the name unlinked. */
+const AUTHORS = [
+  ["Steven Yu", "1", "https://lamsheeper.github.io/"],
+  ["Sheng-Yu Wang", "1,2", "https://peterwang512.github.io/"],
+  ["Kimia Hamidieh", "2", "https://kimiah.github.io/"],
+  ["Antonio Torralba", "2", "https://web.mit.edu/torralba/www/"],
+  ["David Bau", "1", "https://baulab.info/"],
+];
+const AFFILIATIONS = [["Northeastern University", "https://khoury.northeastern.edu/"], ["MIT", "https://www.csail.mit.edu/"]];
+const ARXIV_ID = "XXXX.XXXXX";
+const DEMO = LINKS.find(l => l.label === "Demo").href;
+
+/* ------------------------------------------------------------- utilities */
+const $ = (sel, root = document) => root.querySelector(sel);
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, ...kids) {
+  const n = /^(svg|g|path|rect|circle|line|text|tspan|polygon|defs|pattern|clipPath|marker|mask)$/.test(tag)
+    ? document.createElementNS(NS, tag) : document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.setAttribute("class", v);
+    else if (k === "style" && typeof v === "object") Object.assign(n.style, v);
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (k === "html") n.innerHTML = v;
+    else n.setAttribute(k, String(v));
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) n.append(k);
+  return n;
+}
+/** Set geometry both as attributes (the fallback) and as CSS (which the browser animates). */
+function geo(node, props) {
+  for (const [k, v] of Object.entries(props)) {
+    node.setAttribute(k, v);
+    if (k === "d") node.style.d = `path("${v}")`;
+    else if (k !== "width" && k !== "x" && k !== "x1" && k !== "x2") node.style[k] = typeof v === "number" ? `${v}px` : v;
+  }
+}
+const num = x => Number(x).toLocaleString("en-US");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const f2 = v => v == null ? "–" : v.toFixed(2);
+const load = name => fetch(`data/${name}.json`).then(r => r.json());
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** `text` with each of a fact's terms in bold: marks.f (the function, or the rule's property) and marks.v (the answers). */
+function marked(text, marks) {
+  const terms = [...marks.f.map(t => [t, "kf"]), ...marks.v.map(t => [t, "kv"])].filter(([t]) => t);
+  if (!terms.length) return [text];
+  const cls = Object.fromEntries(terms.map(([t, c]) => [t.toLowerCase(), c]));
+  const pat = terms.map(([t]) => t).sort((a, b) => b.length - a.length)
+    .map(t => (/^\w/.test(t) ? "\\b" : "") + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + (/\w$/.test(t) ? "\\b" : ""));
+  const out = [];
+  let i = 0;
+  for (const m of text.matchAll(new RegExp(pat.join("|"), "gi"))) {
+    out.push(text.slice(i, m.index), el("b", { class: cls[m[0].toLowerCase()] }, m[0]));
+    i = m.index + m[0].length;
+  }
+  out.push(text.slice(i));
+  return out;
+}
+
+function seg(items, current, onPick, disabled = () => false) {
+  const box = el("div", { class: "seg" });
+  const draw = cur => {
+    box.textContent = "";
+    for (const [k, label] of items) {
+      box.append(el("button", {
+        class: String(k) === String(cur) ? "on" : "", disabled: disabled(k),
+        onclick: () => { draw(k); onPick(k); },
+      }, label));
+    }
+  };
+  draw(current);
+  box.set = draw;
+  return box;
+}
+function tabs(items, current, onPick) {
+  const box = el("div", { class: "tabs" });
+  const draw = cur => {
+    box.textContent = "";
+    for (const [k, label] of items) box.append(el("button", { class: k === cur ? "on" : "", onclick: () => { draw(k); onPick(k); } }, label));
+  };
+  draw(current);
+  box.set = draw;
+  return box;
+}
+const tip = {
+  node: null,
+  show(html, ev) {
+    const t = this.node || (this.node = $("#tip"));
+    t.innerHTML = html;
+    t.style.display = "block";
+    const w = t.offsetWidth, h = t.offsetHeight;
+    let x = ev.clientX + 16, y = ev.clientY + 14;
+    if (x + w > innerWidth - 8) x = ev.clientX - w - 16;
+    if (y + h > innerHeight - 8) y = innerHeight - h - 8;
+    t.style.left = `${x}px`;
+    t.style.top = `${y}px`;
+  },
+  hide() { if (this.node) this.node.style.display = "none"; },
+};
+/** Count a number in `node` toward `to`. */
+function tween(node, to, fmt, ms = 700) {
+  const from = node._v ?? to;
+  node._v = to;
+  if (reduced || from === to) { node.textContent = fmt(to); return; }
+  const t0 = performance.now();
+  const tick = t => {
+    const p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3);
+    node.textContent = fmt(from + (to - from) * e);
+    if (p < 1 && node._v === to) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+const oursTag = () => el("em", { class: "ours-tag" }, "ours");
+function head(section, title) {
+  const root = $(`#${section} > div`);
+  root.append(el("h2", {}, title, el("a", { class: "anchor", href: `#${section}` }, "#")));
+  return root;
+}
+/** Run `fn` once, the first time `node` scrolls into view. */
+function onVisible(node, fn) {
+  if (!("IntersectionObserver" in window)) return fn();
+  const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); fn(); } }, { threshold: 0.35 });
+  io.observe(node);
+}
+
+/* ---------------------------------------------------------------- header */
+function header() {
+  const link = (text, url) => url ? el("a", { href: url, target: "_blank", rel: "noopener" }, text) : text;
+  const comma = (i, list) => i < list.length - 1 ? "," : "";
+  $("#authors").append(
+    ...AUTHORS.flatMap(([n, s, url], i) => [el("nobr", {}, link(n, url), el("sup", {}, s), comma(i, AUTHORS)), " "]),
+    el("br"),
+    ...AFFILIATIONS.flatMap(([a, url], i) => [el("nobr", {}, el("sup", {}, String(i + 1)), link(a, url), comma(i, AFFILIATIONS)), " "]));
+  for (const l of LINKS) {
+    const [w, h] = l.wide ? [104, 78] : [78, 100];
+    const img = el("img", { src: `images/${l.thumb}`, width: w, height: h, alt: `${l.label} thumbnail`, class: l.wide ? "wide" : null });
+    const caption = l.caption.flatMap((c, i) => i ? [el("br"), c] : [c]);
+    $("#links").append(l.href
+      ? el("a", { class: "thumb", href: l.href, target: "_blank", rel: "noopener" }, img, el("br"), ...caption)
+      : el("span", { class: "thumb soon", title: "Coming soon" }, img, el("br"), ...caption, el("br"), el("em", {}, "coming soon")));
+  }
+}
+
+/* -------------------------------------------------------- CATT explorer */
+// The slides' column icons (database, research).
+const COL_ICONS = {
+  data: "M48 10c15.5 0 28 3.6 28 8s-12.5 8-28 8-28-3.6-28-8 12.5-8 28-8zM48 30c-15.4 0-28-3.6-28-8v16c0 4.4 12.6 8 28 8s28-3.6 28-8V22c0 4.4-12.6 8-28 8zM48 50c-15.4 0-28-3.6-28-8v16c0 4.4 12.6 8 28 8s28-3.6 28-8V42c0 4.4-12.6 8-28 8zM48 70c-15.4 0-28-3.6-28-8v16c0 4.4 12.6 8 28 8s28-3.6 28-8V62c0 4.4-12.6 8-28 8z",
+  query: "M72.5 63.1c-1.6-1.6-4-2.4-6.2-1.9l-4.5-4.4C65.8 51.6 68 45.2 68 38.6 68.1 21.9 54.6 8.4 38 8.3 21.4 8.2 7.9 21.7 7.8 38.3 7.7 54.9 21.2 68.4 37.8 68.5c6.6 0 13.1-2.2 18.4-6.2l4.4 4.4c-.4 2.3.3 4.6 1.9 6.3L75 85.5c2.7 2.7 7.2 2.7 9.9 0s2.7-7.2 0-9.9L72.5 63.1zM38 62.5c-13.3 0-24-10.7-24-24s10.7-24 24-24 24 10.7 24 24c0 13.2-10.8 24-24 24zM59.5 37h-5.7c-.5.1-1 .4-1.3.8l-3.8 4.1-3.2-11.1c-.3-.9-1.3-1.5-2.2-1.2-.5.2-1 .5-1.2 1.1l-6 15.9L32 24.6c-.2-1-1.1-1.6-2-1.4-.6.1-1.1.6-1.4 1.2L24.3 37h-7.8v4h9.1c.8-.1 1.5-.7 1.7-1.5l2.5-7.6 4 21.5c.1.8.8 1.4 1.6 1.4h.2c.7 0 1.4-.4 1.7-1.1l6.4-16.8 2.6 9c.3.9 1.2 1.5 2.2 1.2.3-.1.6-.3.8-.5l5.4-5.6h4.9V37z",
+};
+/** The slides' fine-tuned LLM: a small network of nodes. */
+function netIcon() {
+  const s = el("svg", { class: "net", viewBox: "0 0 60 60" });
+  const P = Array.from({ length: 6 }, (_, k) => [30 + 22 * Math.cos(Math.PI / 6 + k * Math.PI / 3), 30 + 22 * Math.sin(Math.PI / 6 + k * Math.PI / 3)]);
+  P.forEach((p, k) => {
+    const q = P[(k + 1) % 6];
+    s.append(el("line", { x1: p[0], y1: p[1], x2: q[0], y2: q[1] }), el("line", { x1: 30, y1: 30, x2: p[0], y2: p[1] }));
+  });
+  for (const [x, y] of [...P, [30, 30]]) s.append(el("circle", { cx: x, cy: y, r: 5.5 }));
+  return s;
+}
+
+function benchmark(B) {
+  const root = head("benchmark", "We build a Controlled Attribution Benchmark (CATT)");
+  const totalModels = B.tasks.reduce((a, t) => a + t.models, 0);
+  const cite = (label, id) => el("a", { href: `https://arxiv.org/abs/${id}`, target: "_blank", rel: "noopener" }, label);
+  root.append(el("p", {},
+    "Fact-tracing benchmarks such as ", cite("FTRACE", "2205.11482"), ", ", cite("TrackStar", "2410.17413"), "'s evaluation and ", cite("DATE-LM", "2507.09424"),
+    " ask whether an attribution method ranks the training documents behind a fact above all the others. They disagree on which methods work, ",
+    "and since each uses a different corpus, different queries and a different task, it is hard to tell why. ",
+    "Other work fine-tunes on controlled data so that the ground truth is known, as in ", cite("TOFU", "2401.06121"), "."),
+    el("p", {},
+    "We want to study how attribution methods perform as each property of the fine-tuning data changes on its own. ",
+    "We fine-tune an LLM on facts we made up, so the only source of an answer is the documents that state it. ",
+    "Each combination of properties is a new training set and a newly fine-tuned model to test attribution on. Step through them:"));
+
+  const near = (vals, v) => vals.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
+  // Each dial's value once its step has introduced it; the defaults are what each step first shows.
+  const S = { task: "rules", N: 10, F: 50, distr: true };
+  const STEPS = [
+    { nav: "The setup", sub: "one fact, one model", color: "#404040", title: "Training a model on fake facts",
+      text: "We make up a fact, write a document that states it, and fine-tune a model on that document. When the model answers the question, we know which document taught it." },
+    { nav: "Redundancy", sym: "N", sub: "same fact, many wordings", color: "#c00000", control: "N", title: "Multiple documents teach each fact",
+      text: "In real datasets, the same fact is covered by many documents. Here each fact is written across N documents in different ways, and all N documents teach the same answer." },
+    { nav: "Facts", sym: "|F|", sub: "more competing facts", color: "#4472c4", control: "F", title: "Many facts",
+      text: "The training set holds |F| facts. A method has to find the queried fact's documents among all of them." },
+    { nav: "Distractors", sym: "D<sub>dist</sub>", sub: "look like the query", color: "#ed7d31", control: "distr", title: "Look-alike distractors",
+      text: "Decoys copy the question's wording but name a different function. They look relevant, yet taught the model nothing about the relevant function." },
+    { nav: "Task", sym: "T", sub: "other question types", color: "#595959", control: "task", title: "A second task: routing rules",
+      text: "Each rule sends an item to the Cedar or the Birch queue depending on its properties." },
+    { nav: "Explore", sub: "browse the dataset", color: "#404040", explore: true, title: "Explore the dataset",
+      text: `Every setting is its own training set with its own fine-tuned model (${totalModels} in our sweep). Pick one and browse its facts, documents and queries.` },
+  ];
+  const EXPLORE_F = 50;
+  let step = 0;
+  // The training set the current step shows: only the dials it has introduced, at their chosen values.
+  function view() {
+    const t = B.tasks.find(x => x.key === (step >= 4 ? S.task : "functions"));
+    const F = STEPS[step].explore ? EXPLORE_F : step >= 2 ? S.F : 1;
+    return { t, N: step >= 1 ? near(t.docs, S.N) : 1, F, distr: step >= 3 && S.distr && t.distractors };
+  }
+  function control(k, compact) {
+    const v = view();
+    if (k === "N") return seg(v.t.docs.map(n => [n, compact ? String(n) : `N = ${n}`]), v.N, x => set({ N: +x }));
+    if (k === "F") return seg(v.t.facts.map(f => [f, compact ? String(f) : `|F| = ${f}`]), v.F, x => set({ F: +x }));
+    if (k === "distr") return seg([["off", compact ? "Off" : "No distractors"], ["on", compact ? "On" : "With distractors"]],
+                                  v.distr ? "on" : "off", x => set({ distr: x === "on" }), x => x === "on" && !v.t.distractors);
+    return seg(B.tasks.map(t => [t.key, t.label]), v.t.key, x => set({ task: x }));
+  }
+  function set(patch) { Object.assign(S, patch); render(); }
+  function go(i) { step = Math.max(0, Math.min(STEPS.length - 1, i)); seen.add(step); render(); }
+  const seen = new Set([0]);
+
+  const icon = d => el("svg", { viewBox: "0 0 96 96" }, el("path", { d }));
+  const axes = el("div", { class: "axes" });
+  const narr = el("div", { class: "narr" });
+  const tset = el("div", { class: "tset" });
+  const qset = el("div", { class: "qset" });
+  const wires = el("svg", { class: "wires" });
+  const net = el("span", { style: { display: "flex" } }, netIcon()), llmSt = el("div", { class: "st" });
+  const llm = el("div", { class: "llmrow" }, net,
+    el("div", {}, el("div", { class: "nm" }, "finetuned LLM"), llmSt, el("div", { class: "bar" }, el("i"))));
+  const slide = el("div", { class: "slide" },
+    el("div", { class: "colh", style: { gridColumn: "2" } }, icon(COL_ICONS.data), "Configurable training set"),
+    el("div", { class: "colh qh", style: { gridColumn: "4" } }, icon(COL_ICONS.query), "Attribution query"),
+    tset, qset, wires);
+  const dx = el("div", { class: "dx", hidden: true });
+  const setting = el("div", { class: "setting" });
+  const catt = el("div", { class: "catt" }, axes, narr, slide, dx, setting);
+  root.append(catt);
+
+  // A training document, drawn as the one sentence that states its fact; `depth` cards behind it stand for its other copies.
+  function card(text, marks, { depth = 0, count = 0, decoy = false, no = 0 } = {}) {
+    const d = Math.min(depth, 2);
+    const node = el("div", { class: `dcard${d ? ` deep${d}` : ""}${decoy ? " decoy" : ""}${marks ? "" : " one"}` });
+    for (let i = d; i >= 1; i--) node.append(el("div", { class: "sh", style: { transform: `translate(${4 * i}px, ${4 * i}px)` } }));
+    node.append(el("div", { class: "c" }, el("span", { class: "tx" },
+      ...(decoy ? [text] : ["\u2026", ...marked(text.replace(/[.;:,]+$/, ""), marks), "\u2026"]))));
+    if (count > 1) node.append(el("span", { class: "cnt" }, `\u00d7 ${count}`));
+    if (no) node.append(el("span", { class: "dno" }, `#${no}`));
+    return node;
+  }
+
+  // A deck of cards that keeps them between renders: the first few in view, and under them a pile of sheet edges
+  // standing for the rest. A new count drops sheets onto the pile (or slides them off) and a badge pops up with the new total.
+  function makeDeck(cls, many, thick) {
+    const node = el("div", { class: `deck ${cls}` });
+    const pile = el("div", { class: "pile" });
+    const D = { node, pile, key: null, n: null, top: 0 };
+    // The fade at the bottom says there is more below; it lifts once the reader scrolls to the end.
+    const edge = () => node.classList.toggle("more", node.scrollTop + node.clientHeight < node.scrollHeight - 4);
+    node.addEventListener("scroll", () => { D.top = node.scrollTop; edge(); }, { passive: true });
+    const sheets = n => n <= many ? 0 : Math.min(12, Math.max(1, Math.round(thick * Math.sqrt(n - many))));
+    const done = (c, name) => c.addEventListener("animationend", e => { if (e.animationName === name) c.classList.remove(name); });
+    function restack(n, fresh) {
+      const cur = [...pile.querySelectorAll(".sheet:not(.off)")], want = sheets(n);
+      if (fresh) { pile.textContent = ""; cur.length = 0; }
+      for (let k = cur.length; k < want; k++) {
+        const s = el("i", { class: "sheet on", style: `--k: ${k}; --d: ${fresh ? 0 : ((k - cur.length) * 0.05).toFixed(2)}s` });
+        done(s, "on");
+        pile.append(s);
+      }
+      cur.slice(want).reverse().forEach((s, j) => {
+        s.style.setProperty("--d", `${(j * 0.04).toFixed(2)}s`);
+        s.classList.add("off");
+        setTimeout(() => s.remove(), 360 + j * 40);
+      });
+    }
+    function badge(label, fewer) {
+      pile.querySelectorAll(".delta").forEach(b => b.remove());
+      const b = el("span", { class: `delta${fewer ? " neg" : ""}` }, label);
+      b.addEventListener("animationend", () => b.remove());
+      pile.append(b);
+    }
+    // Show cards 0..n-1 made by `make(i)`; `fresh` (a new step or a different deck) deals them all anew.
+    // `label` is the badge's new total.
+    D.fill = (key, n, make, fresh, label) => {
+      fresh = fresh || key !== D.key;
+      D.key = key;
+      const before = D.n;
+      if (fresh) { node.textContent = ""; D.top = 0; }
+      // Re-rendering detaches the deck, which loses its scroll; put it back once it is in the page again.
+      else queueMicrotask(() => { node.scrollTop = D.top; });
+      const cur = [...node.children].filter(c => !c.classList.contains("leave"));
+      for (let i = cur.length; i < n; i++) {
+        const c = make(i);
+        c.classList.add("deal");
+        done(c, "deal");
+        c.style.setProperty("--d", `${Math.min((i - cur.length) * 0.08, 0.4).toFixed(2)}s`);
+        node.append(c);
+      }
+      cur.slice(n).forEach(c => { c.classList.add("leave"); setTimeout(() => c.remove(), 340); });
+      requestAnimationFrame(edge);
+      setTimeout(edge, 360);
+      restack(n, fresh);
+      if (!fresh && !reduced && before != null && n !== before) badge(label, n < before);
+      D.n = n;
+    };
+    return D;
+  }
+  // Step 1: the queried fact's documents 1..N, each its own wording. Step 2: the other facts 2..|F|, N documents each.
+  const docDeck = makeDeck("docs", 3, 1.6), factDeck = makeDeck("facts", 2, 1.1);
+  const docs = n => `${num(n)} document${n === 1 ? "" : "s"}`;
+  let filledStep = null;
+  // The deck's caption, counting from the deck's last count to its new one.
+  function deckHint(from, to, ...words) {
+    const b = el("b", {});
+    b._v = from ?? to;
+    tween(b, to, x => String(Math.round(x)), 700);
+    return el("div", { class: "deckhint" }, ...words.map(w => w === "#" ? b : w));
+  }
+  const dots = () => el("div", { class: "vdots" }, "\u22ee");
+  const stack = (f, N) => card(f.lines[0], f.marks, { depth: N - 1, count: N });
+
+  // The training set as the slides draw it; returns the ground-truth box and what the step's bracket spans.
+  function fillTrainingSet(v) {
+    const f = v.t.facts_data, N = v.N, gt = el("div", { class: "gtbox" });
+    tset.textContent = "";
+    tset.append(gt);
+    let span = null;
+    const fresh = filledStep !== step;
+    filledStep = step;
+    if (step === 0) {
+      gt.append(card(f[0].lines[0], f[0].marks));
+      tset.append(dots());
+    } else if (step === 1) {
+      const lines = f[0].wordings || f[0].lines, was = fresh ? null : docDeck.n;
+      docDeck.fill(f[0].id, N, i => card(lines[i % lines.length], f[0].marks, { no: i + 1 }), fresh, docs(N));
+      gt.append(docDeck.node, docDeck.pile);
+      if (N > 3) tset.append(deckHint(was, N, "all ", "#", " documents state this fact"));
+      span = [gt];
+    } else if (step === 2 && v.t.roster) {
+      const R = v.t.roster, was = fresh ? null : factDeck.n + 1;
+      gt.append(stack(f[0], N));
+      factDeck.fill(`${v.t.key},${N}`, v.F - 1, i => {
+        const [fn, val, line] = R[(i + 1) % R.length];
+        const c = card(line, { f: [fn], v: [val] }, { depth: N - 1, count: N });
+        c.querySelector(".c").append(el("span", { class: "dno" }, `fact ${i + 2}`));
+        return c;
+      }, fresh, `${v.F} facts \u00b7 ${docs(v.F * N)}`);
+      tset.append(factDeck.node, factDeck.pile, deckHint(was, v.F, "all ", "#", ` facts \u00d7 ${N} document${N > 1 ? "s" : ""} each`));
+      span = [gt, factDeck.pile];
+    } else {
+      gt.append(stack(f[0], N));
+      const others = v.distr || v.t.key === "rules" ? 1 : 2;
+      const rest = f.slice(1, 1 + others).map(x => stack(x, N));
+      tset.append(...rest, dots());
+      if (step === 2) span = [gt, ...rest];
+      if (v.distr) {
+        const dec = card(f[0].decoys[0], null, { depth: N - 1, count: N, decoy: true });
+        tset.append(dec, dots());
+        if (step === 3) span = [dec];
+      }
+    }
+    if (fresh || step >= 3) {
+      gt.classList.add("fade");
+      [...tset.querySelectorAll(".dcard, .vdots")].filter(n => !n.closest(".deck"))
+        .forEach((n, i) => { n.classList.add("deal"); n.style.setProperty("--d", `${(i * 0.08).toFixed(2)}s`); });
+    }
+    return { gt, span };
+  }
+
+  // The dotted trace from the answer back to the ground truth, the fine-tune arrow, and the step's bracket.
+  // trace: "show" it whole, "hide" it (a new model is still training), or "draw" it from the answer back to the documents.
+  // Geometry comes from offsets, not client rects, so cards still moving into place don't skew it.
+  let geom = null, training = false;
+  function drawWires({ trace = "show", grow = false, delay = 0 } = {}) {
+    wires.textContent = "";
+    if (!geom || slide.hidden || getComputedStyle(wires).display === "none") return;
+    const box = n => {
+      let l = 0, t = 0;
+      for (let e = n; e && e !== slide; e = e.offsetParent) { l += e.offsetLeft; t += e.offsetTop; }
+      return { l, t, r: l + n.offsetWidth, b: t + n.offsetHeight, cy: t + n.offsetHeight / 2 };
+    };
+    const ts = box(tset), qs = box(qset), g = box(geom.gt), a = box(geom.answer), ic = box(net);
+    const mx = (ts.r + qs.l) / 2, draw = trace === "draw" && !reduced, td = `--td: ${delay}s`, tdEnd = `--td: ${delay + 0.65}s`;
+    // Straight across when the answer's row already meets the ground-truth box; otherwise an elbow to its middle.
+    const gy = a.cy > g.t + 18 && a.cy < g.b - 18 ? a.cy : g.cy;
+    wires.append(el("defs", {},
+      el("marker", { id: "ah-ft", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 5, markerHeight: 5, orient: "auto" },
+         el("path", { d: "M0,0L10,5L0,10z", fill: training ? "#1f5fa8" : "#bfbfbf" })),
+      el("mask", { id: "gt-reveal", maskUnits: "userSpaceOnUse" },
+         el("path", { class: `reveal${draw ? " draw" : ""}`, style: td, pathLength: 1, d: `M${a.l - 2},${a.cy}H${mx}V${gy}H${g.r + 14}` }))));
+    if (trace !== "hide") {
+      const tip = g.r + 4;
+      wires.append(
+        el("path", { class: "gt", mask: "url(#gt-reveal)", d: `M${a.l - 2},${a.cy}H${mx}V${gy}H${tip + 10}` }),
+        el("path", { class: draw ? "later" : null, style: tdEnd, d: `M${tip},${gy}l11,-6v12z`, fill: "#b07800" }),
+        el("text", { class: `gtl${draw ? " later" : ""}`, style: tdEnd, x: mx, y: Math.min(gy, a.cy) - 26, "text-anchor": "middle" }, "ground"),
+        el("text", { class: `gtl${draw ? " later" : ""}`, style: tdEnd, x: mx, y: Math.min(gy, a.cy) - 10, "text-anchor": "middle" }, "truth"));
+      if (draw) {
+        geom.gt.classList.remove("glow"); void geom.gt.offsetWidth;
+        geom.gt.style.setProperty("--gd", `${delay + 0.7}s`);
+        geom.gt.classList.add("glow");
+      }
+    }
+    wires.append(
+      el("path", { class: `ft${training ? " run" : ""}`, d: `M${ts.r + 2},${ic.cy}H${ic.l - 8}`, "marker-end": "url(#ah-ft)" }),
+      el("text", { class: "ftl", x: (ts.r + ic.l) / 2, y: ic.cy + 20, "text-anchor": "middle" }, "finetune"));
+    if (geom.span) {
+      const rs = geom.span.map(box), t = Math.min(...rs.map(r => r.t)), b = Math.max(...rs.map(r => r.b)), c = STEPS[step].color;
+      const x = ts.l - 6, g2 = el("g", { class: grow ? "grow" : null });
+      g2.append(el("path", { d: `M${x},${t}H${x - 8}V${b}H${x}`, fill: "none", stroke: c, "stroke-width": 2.5 }));
+      const sym = el("text", { class: "sym", x: x - 24, y: (t + b) / 2 + 2, "text-anchor": "middle", fill: c });
+      if (step === 3) sym.append("D", el("tspan", { "font-size": "11", dy: 4 }, "dist"));
+      else sym.append(STEPS[step].sym);
+      g2.append(sym);
+      const val = step === 1 ? view().N : step === 2 ? view().F : null;
+      if (val != null) g2.append(el("text", { class: "val", x: x - 24, y: (t + b) / 2 + 20, "text-anchor": "middle", fill: c }, String(val)));
+      wires.append(g2);
+    }
+  }
+  if ("ResizeObserver" in window) new ResizeObserver(() => drawWires({ trace: training ? "hide" : "show" })).observe(slide);
+  // The ground-truth box grows and shrinks with the redundancy deck; keep the trace and bracket on it.
+  const gtRO = "ResizeObserver" in window && new ResizeObserver(es => {
+    const h = es[0].target.offsetHeight;
+    if (h !== gtRO.h) { gtRO.h = h; drawWires({ trace: training ? "hide" : "show" }); }
+  });
+  function watchGt(gt) {
+    if (!gtRO) return;
+    gtRO.disconnect();
+    gtRO.h = undefined;
+    requestAnimationFrame(() => { gtRO.h = gt.offsetHeight; gtRO.observe(gt); });
+  }
+  if (document.fonts) document.fonts.ready.then(() => drawWires({ trace: training ? "hide" : "show" }));
+
+  let timer, okTimer, last = null, lastStep = null, lastPrompt = null;
+  const shown = {};   // the counts the setting line last showed, to count from
+  function render() {
+    const s = STEPS[step], v = view(), t = v.t, { F, N } = v, unit = t.unit;
+    const docs = F * N, decoys = v.distr ? docs : 0;
+    const key = JSON.stringify([t.key, F, N, v.distr]);
+    const changed = last !== null && key !== last, moved = step !== lastStep;
+    const reshape = changed && !moved && (s.control === "N" || s.control === "F");
+    last = key;
+    const from = lastStep;
+    lastStep = step;
+
+    axes.textContent = "";
+    const tab = i => el("button", { class: i === step ? `on${moved ? " grow" : ""}` : "", style: `--c: ${STEPS[i].color}`, onclick: () => go(i) },
+      el("span", { class: "t", html: STEPS[i].nav + (STEPS[i].sym ? `<i>${STEPS[i].sym}</i>` : "") }), el("span", { class: "d" }, STEPS[i].sub));
+    const knobs = STEPS.map((x, i) => x.control ? i : null).filter(i => i !== null);
+    const side = (i, label) => el("div", { class: "side" }, el("p", { class: "kl" }, label), tab(i));
+    axes.append(side(0, "Start here"),
+      el("div", { class: "knobs" }, el("p", { class: "kl" }, "Dataset properties we vary ", el("span", {}, "\u00b7 every combination trains its own model")),
+         el("div", { class: "kg" }, ...knobs.map(tab))),
+      side(STEPS.length - 1, "Then browse"));
+
+    // The step: what it is about, its one dial, and the way on.
+    narr.style.setProperty("--c", s.color);
+    narr.textContent = "";
+    const final = step === STEPS.length - 1;
+    // A new model trains for ~1.2 s and the trace then takes ~1 s; a new step only deals its cards and draws the trace.
+    const nudge = !final && !seen.has(step + 1);
+    const next = el("button", { class: `navbtn${final ? "" : " primary"}${nudge ? " nudge" : ""}`,
+                                style: nudge ? `--nd: ${changed && !reshape ? 2.6 : 1.5}s` : null, onclick: () => go(final ? 0 : step + 1) },
+      step === 0 ? "Start building the dataset \u2192" : final ? "\u21ba Start over" : "Next \u2192");
+    const ctl = el("div", { class: "ctl" });
+    if (s.control) ctl.append(control(s.control));
+    ctl.append(el("div", { class: "nav" }, step > 0 ? el("button", { class: "navbtn", onclick: () => go(step - 1) }, "\u2190 Back") : null, next));
+    narr.append(el("div", { class: moved ? "rise2" : null }, el("h3", {}, s.title), el("p", {}, s.text)), ctl);
+
+    slide.hidden = !!s.explore;
+    dx.hidden = !s.explore;
+    if (s.explore && moved && from !== null) { dx.classList.remove("open"); void dx.offsetWidth; dx.classList.add("open"); }
+    slide.classList.remove("close");
+    if (!s.explore && moved && from !== null && STEPS[from].explore) { void slide.offsetWidth; slide.classList.add("close"); }
+    if (s.explore) history.replaceState(null, "", "#explore");
+    else if (location.hash === "#explore") history.replaceState(null, "", location.pathname + location.search);
+    if (s.explore) explore(v);
+    else {
+      const { gt, span } = fillTrainingSet(v);
+      const f0 = t.facts_data[0];
+      const answer = el("div", { class: "body" }, f0.query.answer);
+      const fresh = f0.query.prompt !== lastPrompt;
+      lastPrompt = f0.query.prompt;
+      qset.textContent = "";
+      qset.append(el("div", { class: `tcard query${fresh ? " fade" : ""}` }, el("span", { class: "tab" }, "Question"), el("div", { class: "body" }, f0.query.prompt)),
+                  el("div", { class: `tcard answer${fresh ? " fade" : ""}` }, el("span", { class: "tab" }, "Answer"), answer), llm);
+      geom = { gt, answer, span };
+    }
+
+    // What this setting is: a training set of its own, and a model fine-tuned on it.
+    const trained = (t.trained[v.distr ? "distr" : "plain"] || []).includes(`${F},${N}`);
+    setting.textContent = "";
+    if (step > 0) {
+      setting.append(...[el("span", { class: "new" }, "New training set + new model: "),
+        [t.label, step >= 2 ? `|F| = ${F}` : null, `N = ${N}`, v.distr ? "distractors" : null].filter(Boolean).join(", "),
+        step >= 2 ? [" \u00b7 ", counter("docs", docs), " documents", decoys ? [" + ", counter("decoys", decoys), " decoys"] : "",
+                     trained ? ` \u00b7 in our sweep, ${B.seeds} seeds` : " \u00b7 not in our sweep"] : ""].flat(3));
+    }
+    function counter(k, to) {
+      const b = el("b", {});
+      b._v = shown[k] ?? to;
+      shown[k] = to;
+      tween(b, to, x => num(Math.round(x)), 900);
+      return b;
+    }
+    // A new setting trains a new model; once it answers, the answer is traced back to the ground truth.
+    // Turning N or |F| on its own step only reshapes the training set: the model and the trace stay put.
+    if (s.explore) return;
+    const answerCard = geom.answer.parentNode;
+    watchGt(geom.gt);
+    if (reshape) {
+      setting.classList.remove("flash"); void setting.offsetWidth; setting.classList.add("flash");
+      tset.style.setProperty("--c", s.color);
+      tset.classList.remove("bump"); void tset.offsetWidth; tset.classList.add("bump");
+      requestAnimationFrame(() => drawWires({ trace: training ? "hide" : "show" }));
+      return;
+    }
+    clearTimeout(okTimer);
+    if (changed && !reduced) {
+      setting.classList.remove("flash"); void setting.offsetWidth; setting.classList.add("flash");
+      training = true;
+      llm.classList.remove("training"); void llm.offsetWidth; llm.classList.add("training");
+      qset.classList.add("training");
+      llmSt.className = "st";
+      llmSt.textContent = `fine-tuning a new model on ${num(docs + decoys)} documents\u2026`;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        training = false;
+        llm.classList.remove("training");
+        qset.classList.remove("training");
+        const card = geom.answer.parentNode;
+        card.classList.remove("say"); void card.offsetWidth; card.classList.add("say");
+        llmSt.className = "st ok";
+        llmSt.textContent = "\u2713 trained; answers from memory";
+        okTimer = setTimeout(() => { llmSt.className = "st"; llmSt.textContent = B.model; }, 2200);
+        drawWires({ trace: "draw", delay: 0.25 });
+      }, 1250);
+      requestAnimationFrame(() => drawWires({ trace: "hide", grow: moved }));
+    } else {
+      if (training) qset.classList.add("training");
+      else { llmSt.className = "st"; llmSt.textContent = B.model; }
+      if (moved && !training) answerCard.classList.add("say");
+      requestAnimationFrame(() => drawWires({ trace: training ? "hide" : moved ? "draw" : "show", grow: moved, delay: 0.45 }));
+    }
+  }
+
+  // The last step: the dataset itself, one fact and one document at a time, in the chosen setting.
+  const X = { data: {}, task: null, fact: 0, doc: 0, q: "" };
+  async function explore(v) {
+    const k = v.t.key;
+    if (!X.data[k]) {
+      dx.textContent = "";
+      dx.append(el("p", { class: "dim" }, "Loading the dataset\u2026"));
+      X.data[k] = load(`explore_${k}`);
+    }
+    const d = await X.data[k];
+    if (!STEPS[step].explore || view().t.key !== k) return;
+    if (X.task !== k) Object.assign(X, { task: k, fact: 0, doc: 0, q: "" });
+    X.doc = Math.min(X.doc, v.N - 1);
+    const list = el("ul");
+    const search = el("input", { type: "search", placeholder: `Filter ${v.t.unit}s (|F| = ${EXPLORE_F})`, value: X.q, autocomplete: "off",
+                                 oninput: () => { X.q = search.value; drawList(); } });
+    const main = el("div", { class: "dxmain" });
+    dx.textContent = "";
+    dx.append(el("aside", { class: "dxside" },
+      el("div", {}, el("p", { class: "dl" }, "Task"), control("task", true)),
+      el("div", {}, el("p", { class: "dl" }, "Distractors"), control("distr", true)),
+      el("div", {}, el("p", { class: "dl" }, "Documents per fact N"), control("N", true)),
+      search, list), main);
+
+    function drawList() {
+      const q = X.q.trim().toLowerCase();
+      list.textContent = "";
+      d.facts.forEach((f, i) => {
+        if (q && ![f.label, f.id, f.statement].some(s => s.toLowerCase().includes(q))) return;
+        list.append(el("li", { class: i === X.fact ? "on" : "", title: f.statement, onclick: () => { X.fact = i; X.doc = 0; drawList(); drawFact("fact"); } },
+                       el("span", { class: "i" }, String(i + 1)), f.label));
+      });
+    }
+    // how: "fact" when a new fact comes up, "r" / "l" when stepping to the next / previous document.
+    function drawFact(how) {
+      const f = d.facts[X.fact], N = v.N, [genre, text] = f.docs[X.doc];
+      const slideIn = how === "r" || how === "l" ? `sl-${how}` : null;
+      const kv = v.t.key === "rules"
+        ? el("p", { class: "dxkv" }, ...f.header.filter(([h]) => /nouns/.test(h)).map(([h, val]) => el("span", {}, `${h}: `, el("b", {}, val))))
+        : null;
+      const stepBtn = (d0, label) => el("button", { class: "navbtn", disabled: X.doc + d0 < 0 || X.doc + d0 >= N,
+                                                    onclick: () => { X.doc += d0; drawFact(d0 > 0 ? "r" : "l"); } }, label);
+      main.textContent = "";
+      main.classList.remove("fade");
+      if (how === "fact") { void main.offsetWidth; main.classList.add("fade"); }
+      main.append(...[
+        el("div", { class: "tcard fact" }, el("span", { class: "tab" }, v.t.key === "rules" ? "Rule" : "Fact"),
+           el("div", { class: "body" }, ...marked(f.statement[0].toUpperCase() + f.statement.slice(1), f.marks))), kv,
+        el("h5", {}, `Training documents (${N})`),
+        el("div", { class: "dxstep" }, stepBtn(-1, "\u2190"), el("span", {}, "Document ", el("b", {}, String(X.doc + 1)), ` of ${N}`), stepBtn(1, "\u2192"),
+           el("span", { class: "g" }, genre)),
+        el("pre", { class: `dxdoc${slideIn ? ` ${slideIn}` : ""}` }, ...marked(text, f.marks)),
+        el("h5", {}, "Queries (held out from training)"),
+        el("ul", { class: "dxq" }, ...f.queries.map(([p, a]) => el("li", {}, `${p} `, el("span", { class: "a" }, a)))),
+        v.distr && f.decoys.length ? el("h5", {}, `Decoys (${N}): copy the query's wording, name a different function`) : null,
+        v.distr && f.decoys.length ? el("ol", { class: "dxdecoys" }, ...f.decoys.slice(0, N).map(s => el("li", {}, s))) : null,
+      ].filter(Boolean));
+    }
+    drawList();
+    drawFact("fact");
+  }
+  // #explore opens the page on this step, for links from the paper.
+  if (location.hash === "#explore") {
+    step = STEPS.length - 1;
+    seen.add(step);
+    const toExplore = () => catt.scrollIntoView({ block: "start" });
+    requestAnimationFrame(toExplore);
+    addEventListener("load", toExplore, { once: true });
+  }
+  render();
+  // Play the first step's entrance when the reader gets to it, not at page load.
+  onVisible(catt, () => { if (step === 0) { lastStep = null; render(); } });
+}
+
+/* ------------------------------------------------------- chart helpers */
+const fmtPath = pts => pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join("");
+function lineSample(color, dash, width = 2.4) {
+  return el("svg", { width: 26, height: 10, viewBox: "0 0 26 10" },
+    el("line", { x1: 1, x2: 25, y1: 5, y2: 5, stroke: color, "stroke-width": width, "stroke-dasharray": dash || null }));
+}
+function yAxis(g, sy, x0, x1, ticks, fmt = v => v.toFixed(1)) {
+  for (const t of ticks) {
+    g.append(el("line", { class: "grid", x1: x0, x2: x1, y1: sy(t), y2: sy(t) }),
+             el("text", { x: x0 - 8, y: sy(t) + 4, "text-anchor": "end" }, fmt(t)));
+  }
+}
+
+/* ----------------------------------------------- recall of existing methods */
+function existing(R) {
+  const root = head("existing", "Existing methods fail to retrieve the ground-truth documents");
+  root.append(el("p", {},
+    "We treat attribution as retrieval: for each query, a method scores every training document and should rank the query's ground-truth documents highest. ",
+    "With N ground-truth documents per fact, ", el("b", {}, "Recall@N"), " is the fraction of them in the method's top N: 1 means they fill the top N exactly, ",
+    "and a random ranking scores about 1/|F| = 0.02. At every level of redundancy, from one document per fact to fifty, gradient-based methods fall well short of 1. ",
+    "Each method is implemented as described by its paper; each point is the mean over three fine-tuned models (seeds) at |F| = 50, ",
+    "with a band of \u00b12 standard errors. Hover for values."));
+  const TAKE = {
+    "vtok101": "TRAK and EK-FAC start strong at N = 1 (0.88 and 0.70), but lose recall as N grows: by N = 50 they reach 0.07 and 0.45.",
+    "vtok101-distr": "With distractors, no gradient-based method passes 0.18.",
+    "route": "On conditional rules, no gradient-based method passes 0.32.",
+  };
+  let task = R.tasks[0].key;
+  const W = 880, H = 400, P = { l: 52, r: 14, t: 12, b: 48 };
+  const sy = v => P.t + (1.03 - v) / 1.05 * (H - P.t - P.b);
+  const svg = el("svg", { class: "chart anim", viewBox: `0 0 ${W} ${H}` });
+  const gy = el("g"), gx = el("g"), gm = el("g"), gh = el("g");
+  yAxis(gy, sy, P.l, W - P.r, [0, 0.2, 0.4, 0.6, 0.8, 1.0]);
+  gy.append(el("text", { class: "ylab", transform: `translate(14 ${(P.t + H - P.b) / 2}) rotate(-90)`, "text-anchor": "middle" }, "Recall@N"),
+            el("text", { class: "xlab", x: (P.l + W - P.r) / 2, y: H - 6, "text-anchor": "middle" }, "Documents per fact (N)"));
+  const cross = el("line", { y1: P.t, y2: H - P.b, stroke: "#9aa5ae", "stroke-dasharray": "3 3", opacity: 0 });
+  const hit = el("rect", { x: P.l, y: P.t, width: W - P.l - P.r, height: H - P.t - P.b, fill: "transparent" });
+  gh.append(cross, hit);
+  svg.append(gy, gx, gm, gh);
+
+  const G = {};
+  for (const m of R.methods) {
+    const band = !m.variant && m.family !== "retrieval";
+    const g = el("g", { class: "m" });
+    const b = band ? el("path", { fill: m.color, opacity: 0.13, stroke: "none" }) : null;
+    const line = el("path", { fill: "none", stroke: m.color, "stroke-width": m.variant ? 1.7 : 2.5, "stroke-dasharray": m.dash || null, "stroke-linejoin": "round" });
+    const dots = Array.from({ length: 5 }, () => el("circle", { r: m.variant ? 3 : 3.8, fill: m.variant ? "#fff" : m.color, stroke: m.color, "stroke-width": 1.6 }));
+    g.append(...[b, line, ...dots].filter(Boolean));
+    gm.append(g);
+    G[m.key] = { g, b, line, dots };
+  }
+
+  const xscale = docs => {
+    const lo = Math.log(docs[0] * 0.85), hi = Math.log(docs[docs.length - 1] * 1.12);
+    return d => P.l + (Math.log(d) - lo) / (hi - lo) * (W - P.l - P.r);
+  };
+  function draw() {
+    const t = R.tasks.find(x => x.key === task), sx = xscale(t.docs);
+    gx.textContent = "";
+    for (const d of t.docs) gx.append(el("line", { class: "axis", x1: sx(d), x2: sx(d), y1: H - P.b, y2: H - P.b + 5 }),
+                                      el("text", { x: sx(d), y: H - P.b + 19, "text-anchor": "middle" }, String(d)));
+    gx.append(el("line", { class: "axis", x1: P.l, x2: W - P.r, y1: H - P.b, y2: H - P.b }));
+    for (const m of R.methods) {
+      const s = R.series[task][m.key], { g, b, line, dots } = G[m.key];
+      g.classList.toggle("off", !s);
+      if (!s) continue;
+      const pts = t.docs.map((d, i) => [sx(d), s.mean[i], s.se[i]]).filter(p => p[1] != null);
+      geo(line, { d: fmtPath(pts.map(p => [p[0], sy(p[1])])) });
+      if (b) {
+        const k = R.err_se;
+        const up = pts.map(p => [p[0], sy(Math.min(1.03, p[1] + k * p[2]))]);
+        const lo = pts.map(p => [p[0], sy(Math.max(-0.02, p[1] - k * p[2]))]).reverse();
+        geo(b, { d: fmtPath(up.concat(lo)) + "Z" });
+      }
+      dots.forEach((c, i) => {
+        const p = pts[i];
+        c.style.opacity = p ? 1 : 0;
+        if (p) geo(c, { cx: p[0], cy: sy(p[1]) });
+      });
+    }
+    take.textContent = TAKE[task] || "";
+  }
+
+  hit.addEventListener("mousemove", ev => {
+    const t = R.tasks.find(x => x.key === task), sx = xscale(t.docs);
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const x = pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+    const i = t.docs.reduce((a, d, j) => Math.abs(sx(d) - x) < Math.abs(sx(t.docs[a]) - x) ? j : a, 0);
+    geo(cross, { x1: sx(t.docs[i]), x2: sx(t.docs[i]) }); cross.setAttribute("opacity", 1);
+    const rows = R.methods.filter(m => R.series[task][m.key] && R.series[task][m.key].mean[i] != null)
+      .map(m => [m, R.series[task][m.key].mean[i], R.series[task][m.key].se[i]]).sort((a, b) => b[1] - a[1]);
+    tip.show(`<b>N = ${t.docs[i]}</b> &middot; ${t.label}<table>` + rows.map(([m, v, se]) =>
+      `<tr><td><span class="sw" style="border-color:${m.color}"></span></td><td>${m.label}</td><td class="v">${v.toFixed(2)}</td><td class="dim">\u00b1${(R.err_se * se).toFixed(2)}</td></tr>`).join("") + "</table>", ev);
+  });
+  hit.addEventListener("mouseleave", () => { tip.hide(); cross.setAttribute("opacity", 0); });
+
+  const legend = el("div", { class: "legend" });
+  for (const [fk, fam] of Object.entries(R.families)) {
+    const ms = R.methods.filter(m => m.family === fk);
+    if (!ms.length) continue;
+    legend.append(el("div", { class: "fam", style: { color: fam.color } }, fam.label));
+    for (const m of ms) {
+      legend.append(el("div", {
+        class: "item",
+        onmouseenter: () => { svg.classList.add("focus"); G[m.key].g.classList.add("hl"); },
+        onmouseleave: () => { svg.classList.remove("focus"); G[m.key].g.classList.remove("hl"); },
+      }, lineSample(m.color, m.dash, m.variant ? 1.7 : 2.5), m.label));
+    }
+  }
+  const take = el("span");
+  root.append(tabs(R.tasks.map(t => [t.key, t.label]), task, k => { task = k; draw(); }),
+              el("div", { class: "rv" }, svg, legend),
+              el("div", { class: "takeaway" }, take));
+  draw();
+}
+
+/* ------------------------------------------- where is the signal hidden? */
+function signal(Hd) {
+  const root = head("signal", "Where is the ground-truth signal hidden?");
+  root.append(el("p", {},
+    "For each query, we rank all training documents by how much they influenced the model's answer. With standard attribution methods, ",
+    "the documents that actually taught the model the answer often get lost among irrelevant ones. ",
+    "We show that two simple changes to these methods can make the relevant documents stand out."));
+  // Rows of [label, equation, ours?], labels right-aligned against their equations; a plain string is a lead-in line.
+  const eqs = rows => el("div", { class: "math" }, el("div", { class: "eqs", html: rows.map(r => typeof r === "string" ? `<span class="ctx">${r}</span>` :
+    `<span class="lbl${r[2] ? " ours" : ""}">${r[0]}${r[2] ? "<em>ours</em>" : ""}</span><span>${r[1]}</span>`).join("") }));
+  const frac = (a, b) => `<sup>${a}</sup>\u2044<sub>${b}</sub>`;
+  root.append(el("div", { class: "fixcards" },
+    el("div", { class: "fixcard" },
+      el("div", { class: "fx" }, "Fix 1 \u00b7 token selection"),
+      el("h3", {}, "Score a document by its top-k tokens"),
+      eqs([
+        "For training doc <i>d</i> and query <i>q</i>:",
+        ["Document score (all tokens)", `<i>\u03c4</i>(<i>d</i>, <i>q</i>) = ${frac(1, "|<i>d</i>|")} \u03a3<sub><i>t</i> \u2208 <i>d</i></sub> <i>\u03c4<sub>t</sub></i>`],
+        ["Top-k tokens", `<i>\u03c4</i>(<i>d</i>, <i>q</i>) = ${frac("1", "<i>k</i>")} \u03a3<sub><i>t</i> \u2208 <span class='hl'>top-<i>k</i>(<i>d</i>)</span></sub> <i>\u03c4<sub>t</sub></i>`, true],
+      ]),
+      el("div", {},
+        el("p", {}, "A document's attribution score splits into one term per token, and current methods average these terms over every token. ",
+          "But most tokens (formatting, boilerplate, other facts) contribute little to the query, and averaging buries the signal from the few that matter."),
+        el("p", {}, "We instead score each document by its ", el("b", {}, "10 highest token scores"), "."))),
+    el("div", { class: "fixcard" },
+      el("div", { class: "fx" }, "Fix 2 \u00b7 the loss"),
+      el("h3", {}, "The right loss surfaces the relevant tokens"),
+      eqs([
+        ["Cross-entropy", "<i>L</i><sub>CE</sub> = \u2212log <i>p</i>"],
+        ["Neg. log-odds", "<i>L</i><sub>NLO</sub> = \u2212log [ <i>p</i> / (1 \u2212 <i>p</i>) ]", true],
+        ["Gradients", "\u2207<i>L</i><sub>CE</sub> = <span class='hl'>(1 \u2212 <i>p</i>)</span> \u2207<i>L</i><sub>NLO</sub>"],
+      ]),
+      el("div", {},
+        el("p", {}, "Cross-entropy and negative log-odds gradients point in the same direction but differ in magnitude. ",
+          "On tokens the model is confident about (", el("i", {}, "p"), " \u2192 1), cross-entropy scales the gradient by 1 \u2212 ", el("i", {}, "p"), " \u2192 0, so their attribution scores vanish."),
+        el("p", {}, "Negative log-odds preserves the signal from these confident tokens.")))));
+
+  const STEPS = [
+    ["ce/all", "Default recipe", "Cross-entropy \u00b7 all tokens"],
+    ["ce/top", "Fix 1 alone", "Cross-entropy \u00b7 top-10 tokens"],
+    ["margin/all", "Fix 2 alone", "Neg. log-odds \u00b7 all tokens"],
+    ["margin/top", "Both fixes together", "Neg. log-odds \u00b7 top-10 tokens"],
+  ];
+  // The model whose scores are drawn: any (task, N, seed, method) we computed, opening on the paper's.
+  const parse = k => { const [task, docs, seed, method] = k.split("|"); return { task, docs: +docs, seed: +seed, method }; };
+  const keyOf = c => `${c.task}|${c.docs}|${c.seed}|${c.method}`;
+  const has = c => keyOf(c) in Hd.settings;
+  let cfg = parse(Hd.paper), cur = "ce/all";
+  const taskOf = () => Hd.tasks.find(t => t.key === cfg.task);
+
+  const W = 800, H = 280, P = { l: 14, r: 14, t: 10, b: 40 };
+  const w = Hd.linear_width, f = x => Math.asinh(x / w), y0 = H - P.b;
+  const svg = el("svg", { class: "chart anim", viewBox: `0 0 ${W} ${H}` });
+  const COL = { other: ["rgba(115,115,115,0.32)", "#737373"], gt: ["rgba(214,39,40,0.38)", "#d62728"] };
+  const nb = Hd.settings[Hd.paper].edges.length - 1;
+  const bars = { other: [], gt: [] }, outline = {};
+  for (const grp of ["other", "gt"]) {
+    const g = el("g");
+    for (let i = 0; i < nb; i++) {
+      const r = el("rect", { y: y0, height: 0, fill: COL[grp][0] });
+      bars[grp].push(r); g.append(r);
+    }
+    outline[grp] = el("path", { fill: "none", stroke: COL[grp][1], "stroke-width": 1.3 });
+    g.append(outline[grp]);
+    svg.append(g);
+  }
+  const ticks = el("g");
+  svg.append(el("line", { class: "axis", x1: P.l, x2: W - P.r, y1: y0, y2: y0 }), ticks,
+             el("text", { class: "xlab", x: W / 2, y: H - 4, "text-anchor": "middle" }, "Document attribution score (z, per query)"));
+  const hits = el("g");
+  for (let i = 0; i < nb; i++) {
+    const r = el("rect", { y: P.t, height: y0 - P.t, fill: "transparent" });
+    r.addEventListener("mousemove", ev => {
+      const S = Hd.settings[keyOf(cfg)], e = S.edges, p = S.panels[cur], fm = x => Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(2);
+      tip.show(`z in [${fm(e[i])}, ${fm(e[i + 1])})<br><span style="color:#d62728">ground truth ${(100 * p.gt[i]).toFixed(1)}%</span><br>other ${(100 * p.other[i]).toFixed(1)}%`, ev);
+    });
+    r.addEventListener("mouseleave", () => tip.hide());
+    hits.append(r);
+  }
+  svg.append(hits);
+
+  const big = el("span", { class: "big" }), setup = el("span", { class: "setup" });
+  const steps = el("div", { class: "steps" });
+  const lossSeg = seg([["ce", "Cross-entropy"], ["margin", "Neg. log-odds"]], "ce", v => go(`${v}/${cur.split("/")[1]}`));
+  const tokSeg = seg([["all", "All tokens"], ["top", "Top-10 tokens"]], "all", v => go(`${cur.split("/")[0]}/${v}`));
+  STEPS.forEach(([k, t, d], i) => steps.append(el("button", { "data-k": k, onclick: () => go(k) }, el("span", { class: "n" }, String(i + 1)),
+    el("span", { class: "t" }, t), el("span", { class: "d" }, d))));
+
+  // Lay the bins and ticks out for the chosen model; its four panels share one y scale.
+  let sx, sy;
+  function layout() {
+    const S = Hd.settings[keyOf(cfg)], e = S.edges;
+    sx = x => P.l + (f(x) - f(e[0])) / (f(e[e.length - 1]) - f(e[0])) * (W - P.l - P.r);
+    const peak = Math.max(...Object.values(S.panels).flatMap(p => [...p.gt, ...p.other])) * 1.06;
+    sy = v => y0 - v / peak * (y0 - P.t);
+    for (let i = 0; i < nb; i++) {
+      for (const grp of ["other", "gt"]) geo(bars[grp][i], { x: sx(e[i]), width: Math.max(sx(e[i + 1]) - sx(e[i]) - 0.3, 0.5) });
+      geo(hits.children[i], { x: sx(e[i]), width: Math.max(sx(e[i + 1]) - sx(e[i]), 0.5) });
+    }
+    ticks.textContent = "";
+    for (const t of [-1000, -100, -10, -2, 0, 2, 10, 100, 1000]) {
+      if (t < e[0] || t > e[e.length - 1]) continue;
+      ticks.append(el("line", { class: "axis", x1: sx(t), x2: sx(t), y1: y0, y2: y0 + 4 }),
+                   el("text", { x: sx(t), y: y0 + 17, "text-anchor": "middle" }, String(t)));
+    }
+  }
+  function go(k) {
+    cur = k;
+    const S = Hd.settings[keyOf(cfg)], e = S.edges, p = S.panels[k];
+    for (const grp of ["other", "gt"]) {
+      bars[grp].forEach((r, i) => geo(r, { y: sy(p[grp][i]), height: y0 - sy(p[grp][i]) }));
+      let d = `M${sx(e[0])},${y0}`;
+      p[grp].forEach((v, i) => { d += `L${sx(e[i]).toFixed(1)},${sy(v).toFixed(1)}L${sx(e[i + 1]).toFixed(1)},${sy(v).toFixed(1)}`; });
+      geo(outline[grp], { d: d + `L${sx(e[e.length - 1])},${y0}` });
+    }
+    tween(big, p.recall, v => v.toFixed(2));
+    const [loss, tok] = k.split("/");
+    setup.textContent = STEPS.find(x => x[0] === k)[2];
+    lossSeg.set(loss); tokSeg.set(tok);
+    for (const b of steps.children) b.classList.toggle("on", b.dataset.k === k);
+  }
+
+  // The configuration bar: one model per (task, N, seed, method); combinations we did not compute are greyed out.
+  const cfgBar = el("div", { class: "cfg" }), caption = el("p", { class: "caption" });
+  // After a pick, move the other dials to the nearest combination we have.
+  function settle(changed) {
+    const t = taskOf();
+    if (!t.docs.includes(cfg.docs)) cfg.docs = t.docs.reduce((a, b) => Math.abs(b - cfg.docs) < Math.abs(a - cfg.docs) ? b : a);
+    if (has(cfg)) return;
+    for (const sd of [cfg.seed, ...Hd.seeds]) if (changed !== "seed" && has({ ...cfg, seed: sd })) { cfg.seed = sd; return; }
+    for (const sd of [cfg.seed, ...Hd.seeds]) for (const m of [cfg.method, ...Hd.methods.map(x => x.key)])
+      if (has({ ...cfg, seed: sd, method: m })) { cfg.seed = sd; cfg.method = m; return; }
+  }
+  function pick(k, v) { cfg[k] = v; settle(k); drawCfg(); layout(); go(cur); }
+  function drawCfg() {
+    const t = taskOf(), isPaper = keyOf(cfg) === Hd.paper;
+    const row = (label, node) => el("div", { class: "cfgrow" }, el("span", { class: "lab" }, label), node);
+    cfgBar.textContent = "";
+    cfgBar.append(
+      row("Task", seg(Hd.tasks.map(x => [x.key, x.label]), cfg.task, v => pick("task", v))),
+      row("N", seg(t.docs.map(n => [n, String(n)]), cfg.docs, v => pick("docs", +v),
+                   n => !Hd.methods.some(m => Hd.seeds.some(sd => has({ ...cfg, docs: +n, seed: sd, method: m.key }))))),
+      row("Method", seg(Hd.methods.map(m => [m.key, m.label.replace(/^Layerwise /, "")]), cfg.method, v => pick("method", v),
+                        m => !Hd.seeds.some(sd => has({ ...cfg, seed: sd, method: m })))),
+      row("Seed", seg(Hd.seeds.map((sd, i) => [sd, String(i + 1)]), cfg.seed, v => pick("seed", +v), sd => !has({ ...cfg, seed: +sd }))),
+      isPaper ? el("span", { class: "badge" }, "Paper's setting")
+              : el("button", { class: "copy", style: { position: "static" }, onclick: () => { cfg = parse(Hd.paper); drawCfg(); layout(); go(cur); } }, "\u21ba Paper's setting"));
+    const m = Hd.methods.find(x => x.key === cfg.method);
+    caption.textContent = `${m.label} \u00b7 ${t.label} \u00b7 |F| = ${Hd.functions}, N = ${cfg.docs} \u00b7 seed ${Hd.seeds.indexOf(cfg.seed) + 1}.`;
+  }
+
+  root.append(el("div", { class: "hist" }, cfgBar, steps,
+    el("div", { class: "hplot" },
+      el("div", { class: "readout" }, setup,
+         el("span", {}, el("span", { class: "lab" }, "Recall@N"), big),
+         el("span", { class: "hlegend" }, el("span", {}, el("i", { style: { background: "rgba(214,39,40,.55)" } }), "ground-truth docs"),
+            el("span", {}, el("i", { style: { background: "rgba(115,115,115,.45)" } }), "other docs"))),
+      svg,
+      el("div", { class: "hctl" }, "Or set them yourself:", lossSeg, tokSeg))), caption);
+  drawCfg();
+  layout();
+  go(cur);
+}
+
+/* ----------------------------------------------------- which tokens matter */
+const POS = [230, 107, 13], NEG = [33, 102, 191];   // the paper's term colours
+const TOP = 10;
+/** The document's TOP highest-scoring term positions. */
+function topSet(terms, n) {
+  return new Set(Array.from({ length: n }, (_, s) => s).filter(s => terms[s] > 0)
+                      .sort((a, b) => terms[b] - terms[a] || a - b).slice(0, TOP));
+}
+/** The demo's shading, one array of nodes per line: each token by its term over the document's largest |term|; its TOP highest marked `top`, which picks the excerpt's lines. */
+function shadeLines(text, starts, terms) {
+  let s0 = 0;
+  const cum = starts.map(d => (s0 += d)), L = cum.length;
+  const n = Math.min(terms.length, L - 1), top = topSet(terms, n);
+  const lines = [[]];
+  const put = str => str.split("\n").forEach((part, i) => { if (i) lines.push([]); if (part) lines[lines.length - 1].push(part); });
+  if (L && cum[0] > 0) put(text.slice(0, cum[0]));
+  for (let j = 0; j < L; j++) {
+    const piece = text.slice(cum[j], j + 1 < L ? cum[j + 1] : text.length);
+    const s = j - 1;
+    if (s < 0 || s >= n) { put(piece); continue; }
+    const v = terms[s] / 127, a = 0.78 * Math.pow(Math.abs(v), 0.7);
+    const brk = /^\s*\n\s*$/.test(piece);
+    const [, lead, word] = (!brk && piece.match(/^(\s*)(\S[\s\S]*)$/)) || [, "", piece];
+    if (lead) put(lead);
+    const nl = brk ? -1 : word.indexOf("\n");
+    const span = el("span", {}, brk ? (top.has(s) ? "\u21b5" : "\u00a0") : nl < 0 ? word : word.slice(0, nl));
+    if (top.has(s)) span.classList.add("top");
+    if (a > 0.03) span.style.background = `rgba(${(v >= 0 ? POS : NEG).join(",")},${a.toFixed(3)})`;
+    lines[lines.length - 1].push(span);
+    if (brk) put(piece);
+    else if (nl >= 0) put(word.slice(nl));
+  }
+  return lines;
+}
+/** The line of each of the TOP highest positions under either loss, as the paper's excerpt keeps. */
+function keptLines(x) {
+  let s0 = 0;
+  const cum = x.starts.map(d => (s0 += d)), keep = new Set();
+  for (const terms of Object.values(x.terms))
+    for (const s of topSet(terms, Math.min(terms.length, cum.length - 1))) keep.add(x.text.slice(0, cum[s + 1]).split("\n").length - 1);
+  // A routing case reads with its outcome, so keep "Case:" and "Routed to:" lines in pairs.
+  const raw = x.text.split("\n");
+  for (const i of [...keep]) {
+    if (/^\s*Case:/.test(raw[i]) && /^\s*Routed to:/.test(raw[i + 1] || "")) keep.add(i + 1);
+    if (/^\s*Routed to:/.test(raw[i]) && /^\s*Case:/.test(raw[i - 1] || "")) keep.add(i - 1);
+  }
+  return [...keep].sort((a, b) => a - b);
+}
+function tokensSec(X, TY) {
+  const root = head("tokens", "Which tokens matter?");
+  root.append(el("p", {},
+    "For one query per task, we take one of its ground-truth documents and shade each token by its ", el("span", { class: "tas" }, "token attribution score"),
+    " under Grad-Dot, once per loss: orange tokens support the answer, blue ones oppose it."),
+    el("a", { class: "cta", href: DEMO, target: "_blank", rel: "noopener", style: { marginTop: "0" } }, "Try any query, method and setting in the demo \u2192"));
+  const TASK_SUITE = { "Rule Routings": "route", "Function Bindings": "vtok101", "Function Bindings + distractors": "vtok101-distr" };
+  const TABLE = ["grad-dot", "if-ekfac", "trak", "tracin"];
+  const LOSSES = [["ce", "ce", "Cross-entropy"], ["nlo", "margin", "Neg. log-odds"]];
+  let ex = 0;
+  const cards = el("div", { class: "tq" }), docs = el("div", { class: "tpair" }), foot = el("div"), tables = el("div", { class: "tpair", style: { marginTop: "6px" } });
+  root.append(el("div", { style: { marginTop: "22px" } }, tabs(X.map((x, i) => [i, x.task]), ex, i => { ex = i; draw(); })),
+    cards, docs, foot,
+    el("h3", { style: { marginTop: "30px" } }, "Which kinds of tokens make the top 10?"),
+    el("p", { style: { fontSize: "14.5px", margin: "0" } }, "Each token type's share of a document's top-10 positions, divided by its share of all positions (1\u00d7 is chance), ",
+      "over every (query, ground-truth document) pair of the |F| = 50 models, for the task chosen above. Hover over a token type for examples."),
+    tables);
+
+  // A line's nodes grouped into sentences, so long prose lines can be cut to the sentences holding a top token.
+  const sentences = nodes => {
+    const out = [[]];
+    for (const n of nodes) {
+      out[out.length - 1].push(n);
+      if (/[.!?:;]\s*$/.test(typeof n === "string" ? n : n.textContent)) out.push([]);
+    }
+    return out.filter(s => s.length);
+  };
+  const LONG = 90;
+  function docPane(x, loss, lines, label, kept, keepSent) {
+    const pre = el("pre", { class: "t" }), gap = () => el("span", { class: "gap" }, "\u2026");
+    kept.forEach((li, i) => {
+      if (i === 0 ? li > 0 : li - kept[i - 1] > 1 && x.text.split("\n").slice(kept[i - 1] + 1, li).some(l => l.trim()))
+        pre.append(gap(), "\n");
+      const ks = keepSent.get(li);
+      if (!ks) { pre.append(...lines[li], "\n"); return; }
+      sentences(lines[li]).forEach((s, j, all) => {
+        if (ks.has(j)) pre.append(...s);
+        else if (j === 0 || ks.has(j - 1)) pre.append(j ? " " : "", gap(), j === all.length - 1 ? "" : " ");
+      });
+      pre.append("\n");
+    });
+    if (kept[kept.length - 1] < lines.length - 1 && lines.slice(kept[kept.length - 1] + 1).some(l => l.length)) pre.append(gap());
+    const rk = (lab, r) => el("span", {}, lab, el("b", { class: r <= x.docs ? "good" : "bad" }, `#${num(r)}`));
+    return el("div", { class: `docpane ${loss}` }, el("span", { class: "gtab" }, `Ground-truth document \u00b7 ${label}`, loss === "nlo" ? oursTag() : " (default)"),
+      el("div", { class: "rk" }, rk(`Rank of ${num(x.n_train)}:`, x.rank[loss])),
+      pre);
+  }
+  function draw() {
+    const x = X[ex], kept = keptLines(x);
+    const shaded = Object.fromEntries(LOSSES.map(([k]) => [k, shadeLines(x.text, x.starts, x.terms[k])]));
+    const keepSent = new Map();
+    for (const li of kept) {
+      if (x.text.split("\n")[li].length <= LONG) continue;
+      const ks = new Set();
+      for (const [k] of LOSSES) sentences(shaded[k][li]).forEach((s, j) => { if (s.some(n => n.classList && n.classList.contains("top"))) ks.add(j); });
+      if (ks.size) keepSent.set(li, ks);
+    }
+    cards.textContent = "";
+    cards.append(
+      el("div", { class: "tcard query" }, el("span", { class: "tab" }, "Attribution query"), el("div", { class: "body" }, x.query)),
+      el("div", { class: "tcard answer" }, el("span", { class: "tab" }, "Answer"), el("div", { class: "body" }, x.answer)),
+      el("div", { class: "tcard fact" }, el("span", { class: "tab" }, x.task === "Rule Routings" ? "Rule being tested" : "Fact being tested"), el("div", { class: "body" }, x.fact)));
+    docs.textContent = "";
+    docs.append(...LOSSES.map(([k, , lab]) => docPane(x, k, shaded[k], lab.toLowerCase(), kept, keepSent)));
+    foot.textContent = "";
+    foot.append(
+      el("div", { class: "tkey" },
+        el("span", {}, "opposes the answer"), el("span", { class: "bar" }), el("span", {}, "supports the answer")),
+      el("p", { class: "caption", style: { marginTop: "6px" } },
+        `${x.method} \u00b7 |F| = ${x.functions}, N = ${x.docs} \u00b7 ${num(x.n_train)} training documents${x.task.includes("distractors") ? ", decoys included" : ""}. `,
+        `Lines without a high-scoring token are cut (\u2026). A document counts as found if it ranks within the top N = ${x.docs}.`));
+    table(TASK_SUITE[x.task]);
+  }
+  function table(suite) {
+    const v = TY.values[suite];
+    const label = Object.fromEntries(TY.methods.map(m => [m.key, m.label]));
+    tables.textContent = "";
+    for (const [, base, lab] of LOSSES) {
+      const t = el("table", { class: "types" },
+        el("tr", {}, el("th", { class: "m" }, lab, base === "margin" ? el("div", {}, oursTag()) : null), ...v.types.map(n => {
+          const name = n.replace(/ \(.*\)$/, ""), info = v.info && v.info[n];
+          const show = ev => tip.show(`<b>${esc(name)}</b><br><span class="dim">${esc(info.desc)}</span>` +
+                                      `<div class="egs">${info.examples.map(w => `<code>${esc(w)}</code>`).join("")}</div>`, ev);
+          return el("th", info ? { class: "hint", onmousemove: show, onclick: show, onmouseleave: () => tip.hide() } : {},
+            el("span", { class: "nm" }, name.replace(/\b(\w{4})(\w{7,})\b/g, "$1\u00ad$2")));
+        })));
+      for (const m of TABLE) {
+        const row = v.methods[m] && v.methods[m][base];
+        if (!row) continue;
+        t.append(el("tr", {}, el("td", { class: "m" }, label[m]), ...row.map(r => {
+          const a = r == null ? 0 : Math.min(1, Math.abs(Math.log2(r)) / 3.3) * 0.75;
+          const bg = r == null ? "#f3f5f7" : `rgba(${(r >= 1 ? POS : NEG).join(",")},${a.toFixed(3)})`;
+          return el("td", { style: { background: bg } }, r == null ? "\u2013" : `${r >= 9.95 ? r.toFixed(0) : r.toFixed(1)}\u00d7`);
+        })));
+      }
+      tables.append(el("div", { class: "tscroll" }, t));
+    }
+  }
+  draw();
+}
+
+/* ------------------------------------------------------ recall, both fixes */
+// The talk's colors for the standard recipe and for both fixes.
+const FIX_COLOR = { before: "#8faadc", after: "#c00000" };
+function fixesSec(FX) {
+  const root = head("fixes", "Both fixes together raise recall for every method");
+  root.append(el("p", {},
+    "Each method scored the standard way (cross-entropy over all tokens) and with both fixes (negative log-odds, top-10 tokens). ",
+    "Recall@N is the mean over every N and 3 seeds at |F| = 50; error bars are \u00b12 standard errors over those cells."));
+  const W = 1080, H = 350, P = { l: 58, r: 8, t: 22, b: 62 };
+  const sy = v => P.t + (1.05 - v) / 1.05 * (H - P.t - P.b);
+  const svg = el("svg", { class: "chart anim", viewBox: `0 0 ${W} ${H}` });
+  const SHORT = { "grad-dot": "Grad-Dot", "if-ekfac": "EK-FAC", "logra": "LoGra", "trak": "TRAK", "trackstar": "TrackStar", "tracin": "TracIn" };
+  let grown = false;
+  function draw() {
+    svg.textContent = "";
+    const g0 = el("g");
+    yAxis(g0, sy, P.l, W - P.r, [0, 0.25, 0.5, 0.75, 1.0], v => v.toFixed(2));
+    g0.append(el("text", { class: "ylab", transform: `translate(12 ${(P.t + H - P.b) / 2}) rotate(-90)`, "text-anchor": "middle" }, "Recall@N"),
+              el("line", { class: "axis", x1: P.l, x2: W - P.r, y1: sy(0), y2: sy(0) }));
+    svg.append(g0);
+    const ms = FX.methods;
+    const gw = (W - P.l - P.r) / FX.tasks.length, pad = 18;
+    const unit = (gw - 2 * pad) / (ms.length * 2 + (ms.length - 1) * 0.7);
+    FX.tasks.forEach((t, ti) => {
+      const gx = P.l + ti * gw + pad;
+      ms.forEach((m, mi) => {
+        const v = FX.values[t.key][m.key], x = gx + mi * unit * 2.7;
+        for (const [side, dx] of [["before", 0], ["after", 1]]) {
+          const val = v[side], se = v[side + "_se"] * FX.err_se, bx = x + dx * unit;
+          const start = side === "after" && !grown ? v.before : val;
+          const r = el("rect", { x: bx + 1, width: unit - 2, fill: FIX_COLOR[side], rx: 2 });
+          geo(r, { y: sy(start), height: sy(0) - sy(start) });
+          const eb = el("line", { x1: bx + unit / 2, x2: bx + unit / 2, stroke: "#333", "stroke-width": 1 });
+          geo(eb, { y1: sy(Math.max(0, start - se)), y2: sy(Math.min(1.05, start + se)) });
+          const lbl = el("text", { x: bx + unit / 2, "text-anchor": "middle",
+                                   style: { fontSize: "9.5px", fontWeight: side === "after" ? 700 : 400, fill: side === "after" ? FIX_COLOR.after : "#595959" } },
+                         side === "before" ? "" : val.toFixed(2));
+          geo(lbl, { y: sy(Math.min(1.05, start + se)) - 4 });
+          r.addEventListener("mousemove", ev => tip.show(`<b>${m.label}</b> &middot; ${t.label}<br>${side === "before" ? "Cross-entropy, all tokens" : "Neg. log-odds, top-10 tokens"}: <b>${val.toFixed(2)}</b> \u00b1 ${se.toFixed(2)}<br><span class="dim">${v[side + "_n"]} cells</span>`, ev));
+          r.addEventListener("mouseleave", () => tip.hide());
+          svg.append(r, eb, lbl);
+          if (side === "after") r._to = [val, se, eb, lbl];
+        }
+        svg.append(el("text", { transform: `translate(${x + unit + 4} ${sy(0) + 10}) rotate(-35)`, "text-anchor": "end", style: { fontSize: "10px" } }, SHORT[m.key] || m.label));
+      });
+      svg.append(el("text", { x: P.l + ti * gw + gw / 2, y: sy(0) + 54, "text-anchor": "middle", style: { fontSize: "14px", fontWeight: 600, fill: "#1d2429" } }, t.label));
+    });
+    take.textContent = "Both fixes raise every method on every task; the smallest gains are TrackStar with distractors and layerwise TRAK on Rule Routings.";
+  }
+  const take = el("span");
+  function grow() {
+    grown = true;
+    for (const r of svg.querySelectorAll("rect")) {
+      if (!r._to) continue;
+      const [val, se, eb, lbl] = r._to;
+      geo(r, { y: sy(val), height: sy(0) - sy(val) });
+      geo(eb, { y1: sy(Math.max(0, val - se)), y2: sy(Math.min(1.05, val + se)) });
+      geo(lbl, { y: sy(Math.min(1.05, val + se)) - 4 });
+    }
+  }
+  const key = el("div", { class: "hlegend", style: { marginLeft: 0 } },
+    el("span", {}, el("i", { style: { background: FIX_COLOR.before } }), "prior: cross-entropy, all tokens"),
+    el("span", { style: { color: FIX_COLOR.after, fontWeight: 600 } }, el("i", { style: { background: FIX_COLOR.after } }), "both fixes: neg. log-odds, top-10 tokens", oursTag()));
+  root.append(el("div", { class: "toolbar" }, key), svg,
+    el("p", { class: "caption" }, "TRAK and TracIn are their layerwise variants, whose per-module gradient sketch keeps per-token terms; TRAK is drawn without its Q = 1 \u2212 p document weight here, so no method's top-10 carries a document weight."),
+    el("div", { class: "takeaway" }, take));
+  draw();
+  onVisible(svg, () => setTimeout(grow, 250));
+}
+
+/* ------------------------------------------------- how many tokens to keep */
+function topkSec(K) {
+  const root = head("topk", "Keep only a few tokens: more dilute the signal");
+  root.append(el("p", {},
+    "Score each document by the mean of its k highest token scores, from a single token up to all of them (documents run to about 250 tokens). ",
+    "Mean over every N and 3 seeds at |F| = 50; bands are \u00b12 standard errors over those cells."));
+  let task = "vtok101-distr", method = "grad-dot";
+  const W = 1040, H = 380, P = { l: 52, r: 16, t: 12, b: 48 }, GAP = 0.45;
+  const ks = K.k.slice(0, -1), lx = ks.map(k => Math.log10(k)), xAll = lx[lx.length - 1] + GAP;
+  const lo = lx[0] - 0.12, hi = xAll + 0.12;
+  const sx = v => P.l + (v - lo) / (hi - lo) * (W - P.l - P.r);
+  const xs = [...lx, xAll].map(sx);
+  const sy = v => P.t + (1.03 - v) / 1.05 * (H - P.t - P.b);
+  const svg = el("svg", { class: "chart anim", viewBox: `0 0 ${W} ${H}` });
+  const g0 = el("g");
+  g0.append(el("rect", { x: sx(lx[lx.length - 1] + GAP / 2), width: sx(hi) - sx(lx[lx.length - 1] + GAP / 2), y: P.t, height: H - P.t - P.b, fill: "#FBF3C4", opacity: 0.8 }),
+            el("text", { x: sx(xAll), y: sy(1) + 18, "text-anchor": "middle", style: { fontSize: "12px", fill: "#7A5F00" } }, "prior work"));
+  yAxis(g0, sy, P.l, W - P.r, [0, 0.2, 0.4, 0.6, 0.8, 1.0]);
+  const shown = new Set([1, 3, 10, 30, 100, 250]);
+  ks.forEach((k, i) => g0.append(el("line", { class: "axis", x1: xs[i], x2: xs[i], y1: H - P.b, y2: H - P.b + 4 }),
+                                 shown.has(k) ? el("text", { x: xs[i], y: H - P.b + 18, "text-anchor": "middle" }, String(k)) : null));
+  g0.append(el("text", { x: xs[xs.length - 1], y: H - P.b + 18, "text-anchor": "middle", style: { fontWeight: 600 } }, "all"),
+            el("line", { class: "axis", x1: P.l, x2: W - P.r, y1: H - P.b, y2: H - P.b }),
+            el("text", { class: "ylab", transform: `translate(14 ${(P.t + H - P.b) / 2}) rotate(-90)`, "text-anchor": "middle" }, "Recall@N"),
+            el("text", { class: "xlab", x: (P.l + W - P.r) / 2, y: H - 6, "text-anchor": "middle" }, "Tokens kept per document (k)"));
+  svg.append(g0);
+  const COLOR = { ce: "#6f93d6", margin: "#c00000" };
+  const S = {};
+  for (const b of ["ce", "margin"]) {
+    const band = el("path", { fill: COLOR[b], opacity: 0.15 });
+    const line = el("path", { fill: "none", stroke: COLOR[b], "stroke-width": 2.6, "stroke-linejoin": "round" });
+    const dots = xs.map((_, i) => el("circle", { r: i === xs.length - 1 ? 4.5 : 3.5, fill: i === xs.length - 1 ? "#fff" : COLOR[b], stroke: COLOR[b], "stroke-width": 1.8 }));
+    svg.append(band, line, ...dots);
+    S[b] = { band, line, dots };
+  }
+  const cross = el("line", { y1: P.t, y2: H - P.b, stroke: "#9aa5ae", "stroke-dasharray": "3 3", opacity: 0 });
+  const hit = el("rect", { x: P.l, y: P.t, width: W - P.l - P.r, height: H - P.t - P.b, fill: "transparent" });
+  svg.append(cross, hit);
+  const take = el("span");
+  function draw() {
+    const v = K.values[task][method];
+    for (const b of ["ce", "margin"]) {
+      const s = v && v[b];
+      const { band, line, dots } = S[b];
+      if (!s) { line.style.opacity = band.style.opacity = 0; dots.forEach(d => d.style.opacity = 0); continue; }
+      line.style.opacity = 1; band.style.opacity = "";
+      const pts = xs.map((x, i) => [x, s.mean[i], s.se[i]]);
+      const k = K.err_se;
+      geo(line, { d: fmtPath(pts.slice(0, -1).map(p => [p[0], sy(p[1])])) });
+      geo(band, { d: fmtPath(pts.slice(0, -1).map(p => [p[0], sy(Math.min(1.03, p[1] + k * p[2]))])
+                     .concat(pts.slice(0, -1).map(p => [p[0], sy(Math.max(-0.02, p[1] - k * p[2]))]).reverse())) + "Z" });
+      dots.forEach((d, i) => { d.style.opacity = 1; geo(d, { cx: pts[i][0], cy: sy(pts[i][1]) }); });
+    }
+    if (v && v.margin && v.ce) {
+      const best = b => { const m = v[b].mean.slice(0, -1); const i = m.indexOf(Math.max(...m)); return [m[i], ks[i]]; };
+      const [nb, nk] = best("margin"), [cb, ck] = best("ce");
+      take.textContent = `Neg. log-odds peaks at ${nb.toFixed(2)} (k = ${nk}) against ${v.margin.mean.at(-1).toFixed(2)} over all tokens; ` +
+                         `cross-entropy peaks at ${cb.toFixed(2)} (k = ${ck}) against ${v.ce.mean.at(-1).toFixed(2)}.`;
+    }
+  }
+  hit.addEventListener("mousemove", ev => {
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const x = pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+    const i = xs.reduce((a, xx, j) => Math.abs(xx - x) < Math.abs(xs[a] - x) ? j : a, 0);
+    const v = K.values[task][method];
+    geo(cross, { x1: xs[i], x2: xs[i] }); cross.setAttribute("opacity", 1);
+    tip.show(`<b>k = ${K.k[i]}</b><table>` + ["margin", "ce"].filter(b => v && v[b]).map(b =>
+      `<tr><td><span class="sw" style="border-color:${COLOR[b]}"></span></td><td>${K.bases[b]}</td><td class="v">${v[b].mean[i].toFixed(2)}</td></tr>`).join("") + "</table>", ev);
+  });
+  hit.addEventListener("mouseleave", () => { tip.hide(); cross.setAttribute("opacity", 0); });
+  const mseg = seg(K.methods.map(m => [m.key, m.label]), method, v => { method = v; draw(); }, k => !K.values[task][k]);
+  root.append(tabs(K.tasks.map(t => [t.key, t.label]), task, k => { task = k; draw(); }),
+    el("div", { class: "toolbar" }, el("span", { class: "dim" }, "Method"), mseg,
+       el("span", { class: "hlegend", style: { marginLeft: 0 } }, el("span", {}, el("span", { class: "sw", style: { borderColor: COLOR.margin, marginRight: "6px" } }), "Neg. log-odds", oursTag()),
+          el("span", {}, el("span", { class: "sw", style: { borderColor: COLOR.ce, marginRight: "6px" } }), "Cross-entropy"))),
+    svg, el("div", { class: "takeaway" }, take));
+  draw();
+}
+
+/* ------------------------------------------------------------- FTRACE-TREX */
+function ftraceSec(FT) {
+  const root = head("ftrace", "The loss change carries over to FTRACE-TREX");
+  root.append(el("p", {},
+    `On FTRACE-TREX (Aky\u00fcrek et al., 2022) we remove each method's top-ranked training documents for ${FT.facts} counterfactual facts, `,
+    `retrain ${FT.model} without them, and measure how much its accuracy on those facts drops. A bigger drop means the method found documents the model really learned the facts from.`));
+  const W = 1040, H = 340, P = { l: 52, r: 10, t: 18, b: 56 };
+  const max = 55, sy = v => P.t + (max - v) / max * (H - P.t - P.b);
+  const svg = el("svg", { class: "chart", viewBox: `0 0 ${W} ${H}` });
+  const g0 = el("g");
+  yAxis(g0, sy, P.l, W - P.r, [0, 10, 20, 30, 40, 50], v => `${v}%`);
+  g0.append(el("line", { class: "axis", x1: P.l, x2: W - P.r, y1: sy(0), y2: sy(0) }),
+            el("text", { class: "ylab", transform: `translate(12 ${(P.t + H - P.b) / 2}) rotate(-90)`, "text-anchor": "middle" }, "Accuracy drop"),
+            el("text", { class: "xlab", x: (P.l + W - P.r) / 2, y: H - 6, "text-anchor": "middle" }, "Training documents removed"));
+  svg.append(g0);
+  // Bars side by side within a family (one colour), a gap between families; the
+  // retrieval baseline is a dotted line across the group rather than a bar.
+  const barM = FT.methods.filter(m => !m.baseline), baseM = FT.methods.filter(m => m.baseline);
+  const families = [...new Set(barM.map(m => m.family))];
+  const fam = barM.map(m => families.indexOf(m.family));
+  const nf = families.length, gapK = 0.7;
+  const gw = (W - P.l - P.r) / FT.budgets.length, pad = 26, bw = (gw - 2 * pad) / (barM.length + gapK * (nf - 1));
+  const bars = [];
+  FT.budgets.forEach((b, bi) => {
+    const x0 = P.l + bi * gw + pad, x1 = P.l + (bi + 1) * gw - pad;
+    barM.forEach((m, mi) => {
+      const p = m.points.find(q => q.budget === b);
+      if (!p) return;
+      const x = x0 + (mi + gapK * fam[mi]) * bw, se = FT.err_se * p.se;
+      const r = el("rect", { x: x + 1.5, width: bw - 3, y: sy(0), height: 0, fill: m.color, rx: 2,
+                             "fill-opacity": SHADE[m.variant], stroke: m.color, "stroke-width": 1.2 });
+      const eb = el("line", { x1: x + bw / 2, x2: x + bw / 2, y1: sy(Math.max(0, p.mean - se)), y2: sy(p.mean + se), stroke: "#333", "stroke-width": 1, opacity: 0 });
+      const t = el("text", { x: x + bw / 2, y: sy(p.mean + se) - 5, "text-anchor": "middle", opacity: 0, style: { fontSize: "10.5px", fontWeight: 600, paintOrder: "stroke", stroke: "#fff", strokeWidth: "3px" } }, `${p.mean.toFixed(0)}%`);
+      r.addEventListener("mousemove", ev => tip.show(`<b>${m.label}</b><br>${num(b)} documents removed: <b>${p.mean.toFixed(1)}%</b> \u00b1 ${se.toFixed(1)}<br><span class="dim">${p.seeds} seeds</span>`, ev));
+      r.addEventListener("mouseleave", () => tip.hide());
+      svg.append(r, eb, t);
+      bars.push([r, p.mean, eb, t]);
+    });
+    baseM.forEach(m => {
+      const p = m.points.find(q => q.budget === b);
+      if (!p) return;
+      const y = sy(p.mean), se = FT.err_se * p.se;
+      const ln = el("line", { x1: x0, x2: x1, y1: y, y2: y, stroke: m.color, "stroke-width": 1.8, "stroke-dasharray": "2 3", "stroke-linecap": "round", opacity: 0 });
+      const lab = el("text", { x: x1 + 4, y: y - 2, opacity: 0, style: { fontSize: "10.5px", fill: m.color } },
+        el("tspan", { x: x1 + 4 }, m.label), el("tspan", { x: x1 + 4, dy: "1.15em", style: { fontWeight: 600 } }, `${p.mean.toFixed(0)}%`));
+      const hit = el("line", { x1: x0, x2: x1, y1: y, y2: y, stroke: "transparent", "stroke-width": 10 });
+      hit.addEventListener("mousemove", ev => tip.show(`<b>${m.label}</b> (baseline)<br>${num(b)} documents removed: <b>${p.mean.toFixed(1)}%</b> \u00b1 ${se.toFixed(1)}<br><span class="dim">${p.seeds} seeds</span>`, ev));
+      hit.addEventListener("mouseleave", () => tip.hide());
+      svg.prepend(ln);
+      svg.append(lab, hit);
+      bars.push([null, 0, ln, lab]);
+    });
+    svg.append(el("text", { x: P.l + bi * gw + gw / 2, y: sy(0) + 20, "text-anchor": "middle", style: { fontSize: "13px", fill: "#1d2429" } }, num(b)));
+  });
+  svg.classList.add("anim");
+  onVisible(svg, () => setTimeout(() => bars.forEach(([r, v, eb, t]) => { if (r) geo(r, { y: sy(v), height: sy(0) - sy(v) }); eb.setAttribute("opacity", 1); t.setAttribute("opacity", 1); }), 200));
+  const swatch = (color, variant) => el("i", { style: { background: `${color}${Math.round(SHADE[variant] * 255).toString(16).padStart(2, "0")}`, boxShadow: `inset 0 0 0 1.2px ${color}` } });
+  const legend = el("div", { class: "hlegend", style: { marginLeft: 0, flexWrap: "wrap" } },
+    ...families.map(f => el("span", {}, swatch(barM.find(m => m.family === f).color, "top10"), f)),
+    el("span", { class: "dim", style: { margin: "0 2px" } }, "|"),
+    ...Object.entries(FT.variants).map(([v, label]) => el("span", {}, swatch("#56616b", v), label, v === "published" ? null : oursTag())),
+    ...baseM.map(m => el("span", {},
+      el("i", { style: { width: "18px", height: "0", borderRadius: "0", borderTop: `2px dotted ${m.color}`, verticalAlign: "3px" } }),
+      `${m.label} (baseline)`)));
+  const last = FT.budgets[FT.budgets.length - 1];
+  const at = m => m.points.find(p => p.budget === last)?.mean;
+  const seeds = Math.max(...barM.flatMap(m => m.points.map(p => p.seeds)));
+  const of = (f, v) => barM.find(m => m.family === f && m.variant === v);
+  const trios = families.map(f => [f, of(f, "published"), of(f, "nlo"), of(f, "top10")]).filter(([, p, n]) => p && n && at(p) != null && at(n) != null);
+  root.append(el("div", { class: "toolbar" }, legend), svg,
+    el("p", { class: "caption" }, `${FT.model}, mean of ${seeds} seeds, error bars \u00b12 SE. Every method removes the same number of documents, round-robin over the facts' rankings; ${num(last)} is the size of the facts' ground-truth union. `,
+       "Lightest bar: each method as published, TRAK (Park et al., 2023) with a dense projection and its Q = 1 \u2212 p weight, EK-FAC and Grad-Dot with cross-entropy. Middle bar: the same method with negative log-odds over all tokens. Solid bar: negative log-odds over each document's top 10 tokens; TRAK's dense projection has no per-token scores, so it has no top-10 bar. Every loss counts the answer tokens only, not the target's format tokens. ",
+       baseM.length ? `Dotted line: ${baseM.map(m => m.label).join(", ")}, a retrieval baseline (earlier runs, 2\u20133 seeds).` : ""),
+    el("div", { class: "takeaway" }, `Negative log-odds raises every method's accuracy drop at ${num(last)} documents: ` +
+       trios.map(([f, p, n, t]) => `${f} ${at(p).toFixed(0)}% \u2192 ${at(n).toFixed(0)}%` + (t && at(t) != null ? ` (${at(t).toFixed(0)}% with top 10)` : "")).join(", ") +
+       ` (up to ${Math.max(...trios.map(([, p, n]) => at(n) / at(p))).toFixed(1)}\u00d7). Top-10 selection matters less here than on CATT: it moves EK-FAC and Grad-Dot by a few points.`));
+}
+
+const SHADE = { published: 0.18, nlo: 0.55, top10: 1 };
+
+/* --------------------------------------------------------------- citation */
+function citation() {
+  const root = head("cite", "How to cite");
+  const bib = `@article{yu2026elucidating,
+  title   = {Elucidating the Design Space of {LM} Data Attribution},
+  author  = {${AUTHORS.map(([n]) => { const p = n.split(" "); return `${p.pop()}, ${p.join(" ")}`; }).join(" and ")}},
+  journal = {arXiv preprint arXiv:${ARXIV_ID}},
+  year    = {2026}
+}`;
+  const pre = el("pre", { class: "bib clickselect" }, bib);
+  const btn = el("button", { class: "copy", onclick: () => navigator.clipboard.writeText(bib).then(() => { btn.textContent = "Copied"; setTimeout(() => btn.textContent = "Copy", 1400); }) }, "Copy");
+  const authors = AUTHORS.map(([n]) => n).join(", ");
+  root.append(
+    el("p", {}, "The paper can be cited as follows."),
+    el("div", { class: "card" },
+      el("h3", { class: "card-header" }, "bibliography"),
+      el("div", { class: "card-block" },
+        el("p", { class: "card-text clickselect hanging" }, `${authors}. "`, el("em", {}, "Elucidating the Design Space of LM Data Attribution."),
+           `" arXiv preprint arXiv:${ARXIV_ID}, 2026.`)),
+      el("h3", { class: "card-header" }, "bibtex"),
+      el("div", { class: "card-block", style: { position: "relative" } }, pre, btn)));
+}
+document.addEventListener("click", ev => {
+  const node = ev.target.closest(".clickselect");
+  if (!node) return;
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const sel = getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
+
+/* --------------------------------------------------------------------- main */
+header();
+citation();
+Promise.all(["benchmark", "recall", "hist", "tokens", "types", "fixes", "topk", "ftrace"].map(load))
+  .then(([B, R, Hd, X, TY, FX, K, FT]) => {
+    benchmark(B);
+    existing(R);
+    signal(Hd);
+    tokensSec(X, TY);
+    fixesSec(FX);
+    topkSec(K);
+    ftraceSec(FT);
+  });
+</script>
+</body>
+</html>

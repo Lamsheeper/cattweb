@@ -1,0 +1,147 @@
+/* The baulab.info project page template (as in unified.baulab.info and
+   rome.baulab.info), without Bootstrap: the few Bootstrap rules the template
+   relies on are restated here, because Bootstrap's own classes (.col, .fade,
+   .close, .figure, .badge) collide with the page's interactive figures. */
+body, td, th {
+  font-family: 'Open Sans', sans-serif;
+}
+
+.container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+.text-center { text-align: center; }
+
+/* CATT blue, the page's accent colour. */
+.nd-pageheader {
+  padding: 2rem 15px;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-align: center;
+  background-color: #1f5fa8;
+}
+
+.nd-pageheader a, .nd-pageheader a.likelink {
+  color: #ffffff;
+}
+
+.nd-pagefooter {
+  margin-top: 3rem;
+  padding: 1rem;
+  color: #ffffff;
+  text-align: center;
+  background-color: #1f5fa8;
+}
+
+.nd-pagefooter a {
+  color: #ffffff;
+}
+
+.nd-pageheader .container {
+  position: relative;
+}
+
+.nd-pageheader address {
+  font-weight: 300;
+  font-style: normal;
+  margin: 0;
+}
+
+.nd-pageheader p, .nd-pageheader h1 {
+  margin: 0 0 0.75rem;
+  font-size: 2.25rem;
+  font-weight: 300;
+  line-height: 1.3;
+}
+
+nobr.widenobr {
+  white-space: normal;
+}
+
+/* The links under the banner: a thumbnail over a two-line caption. */
+.thumbs {
+  margin: 0 0 1rem;
+}
+.thumb {
+  display: inline-block;
+  padding: 1rem;
+  vertical-align: top;
+  line-height: 1.5;
+}
+.thumb img {
+  border: 1px solid;
+  margin: 0 38px;
+}
+.thumb img.wide {
+  margin-top: 22px;
+}
+.thumb.soon {
+  color: #6b7780;
+  cursor: default;
+}
+.thumb.soon img {
+  opacity: 0.5;
+}
+.thumb.soon em {
+  font-size: 12px;
+}
+
+.card {
+  position: relative;
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.25rem;
+}
+.card-header {
+  padding: 0.75rem 1.25rem;
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.1;
+  background-color: #f7f7f9;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+.card-header:first-child {
+  border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+}
+.card-block {
+  padding: 1.25rem;
+}
+.card-text:last-child {
+  margin-bottom: 0;
+}
+.card.summary {
+  margin-top: 1.5rem;
+}
+
+.hanging {
+  text-indent: -3em;
+  margin-left: 3em;
+}
+
+@media (min-width: 576px) {
+  .nd-pageheader {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+    margin-bottom: 2rem;
+  }
+  nobr.widenobr {
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 768px) {
+  .nd-pageheader p, .nd-pageheader h1 {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .thumb {
+    padding: 0.75rem 0.25rem;
+  }
+  .thumb img {
+    margin: 0 12px;
+  }
+}
